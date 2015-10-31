@@ -44,7 +44,7 @@ namespace thread
 			catch (...)
 			{
 			}
-			cvWaitKey(1000);
+			cvWaitKey(100);
 			dp->lock.lock();
 			if (dp->stop == true)
 				break;
