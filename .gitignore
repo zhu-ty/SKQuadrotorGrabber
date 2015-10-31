@@ -10,7 +10,7 @@
  
 [Dd]ebug/
 [Rr]elease/
-#[Dd]ebugEXE/
+[Dd]ebugEXE/
 #[Rr]elease/
 x64/
 build/
