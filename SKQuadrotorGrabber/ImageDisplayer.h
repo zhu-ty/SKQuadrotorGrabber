@@ -11,12 +11,15 @@
 #include <stdio.h>
 #include <cv.h>
 #include <highgui.h>
+#define RESIZE_PIC
 using namespace std;
 
 
 class ImageDisplayer
 {
 public:
+	const static int resize_height = 500;
+	const static int resize_width = 500;
 	ImageDisplayer();
 	~ImageDisplayer();
 	void display(IplImage **p);

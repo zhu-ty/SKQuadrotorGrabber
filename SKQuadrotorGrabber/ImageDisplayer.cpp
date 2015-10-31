@@ -33,13 +33,30 @@ namespace thread
 	DWORD WINAPI Displayimg(LPVOID lpParamter)
 	{
 		ImageDisplayerImpl::Dthread *dp = (ImageDisplayerImpl::Dthread *)lpParamter;
+#ifdef RESIZE_PIC
+		IplImage *old;
+		IplImage *show = cvCreateImage(cvSize(ImageDisplayer::resize_width, ImageDisplayer::resize_height), (*(dp->p))->depth, (*(dp->p))->nChannels);
+		old = nullptr;
+#endif
 		while (1)
 		{
 			try
 			{
 				IplImage *pth = *(dp->p);
+#ifdef RESIZE_PIC
+				if (old != pth || old->imageData != pth->imageData)
+				{
+					cvReleaseImage(&show);
+					show = cvCreateImage(cvSize(ImageDisplayer::resize_width, ImageDisplayer::resize_height), (*(dp->p))->depth, (*(dp->p))->nChannels);
+					cvResize(pth, show);
+				}
+				cvShowImage(dp->name.c_str(), show);
+				cvResizeWindow(dp->name.c_str(),show->width,show->height);
+				old = pth;
+#else
 				cvShowImage(dp->name.c_str(), pth);
-				cvResizeWindow(dp->name.c_str(), pth->width, pth->height);
+				cvResizeWindow(dp->name.c_str(),pth->width,pth->height);
+#endif
 			}
 			catch (...)
 			{
@@ -51,6 +68,9 @@ namespace thread
 			dp->lock.unlock();
 		}
 		dp->lock.unlock();
+#ifdef RESIZE_PIC
+		cvReleaseImage(&show);
+#endif
 		cvDestroyWindow(dp->name.c_str());
 		return 0;
 	}

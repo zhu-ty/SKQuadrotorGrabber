@@ -89,6 +89,12 @@ bool CommandHandler::handle(string s)
 			printf("Calculating...\n");
 			_impl->calculate();
 		}
+#ifdef _DEBUG
+		else if (_impl->compare(splitstr[0], "loadd"))
+		{
+			_impl->load("F:\\360Downloads\\3.jpg");
+		}
+#endif
 		else
 		{
 			printf("Error\n");
@@ -192,15 +198,20 @@ void CommandHandlerImpl::exit()
 }
 void CommandHandlerImpl::calculate()
 {
-	if (input == nullptr)
+	if (input == nullptr || (input->nChannels != 3 && input->nChannels != 1))
 		return;
 	if (input->nChannels == 3)
 	{
 		IplImage *p = cvCreateImage(cvSize(input->width, input->height), input->depth, 1);
 		cvCvtColor(input, p, CV_BGR2GRAY);
-		cvReleaseImage(&input);
+		IplImage *q;
+		q = input;
+		input = p;
+		cvReleaseImage(&q);
 		input = p;
 	}
+	//cvThreshold(input, input, threshold, 255, CV_THRESH_BINARY);
+	cvAdaptiveThreshold(input, input, 255, 0, 0, 25);
 	printf("\n");
 }
 
