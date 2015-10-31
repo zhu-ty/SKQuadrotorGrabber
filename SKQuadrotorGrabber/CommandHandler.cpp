@@ -210,7 +210,7 @@ void CommandHandlerImpl::calculate()
 		cvReleaseImage(&q);
 		input = p;
 	}
-	//cvThreshold(input, input, threshold, 255, CV_THRESH_BINARY);
+	///cvThreshold(input, input, threshold, 255, CV_THRESH_BINARY);
 	cvAdaptiveThreshold(input, input, 255, 0, 0, 25);
 	printf("\n");
 }
