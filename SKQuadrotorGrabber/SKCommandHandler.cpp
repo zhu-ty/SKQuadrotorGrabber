@@ -221,8 +221,10 @@ void SKCommandHandlerImpl::calculate()
 	//cvThreshold(input, input, threshold, 255, CV_THRESH_BINARY);
 	cvAdaptiveThreshold(input, input, 255, 0, 0, 25);
 
+	inputmat = cv::Mat(input);
 	cv::Mat temp;
 	cv::Canny(inputmat, temp, 50, 200);
+	
 	vector<cv::Vec4i> lines;
 	cv::HoughLinesP(temp, lines, 1, CV_PI / 180, 80, 50, 10);
 	IplImage *p, *q;
