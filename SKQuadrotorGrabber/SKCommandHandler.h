@@ -1,4 +1,4 @@
-//CommandHandler
+//SKCommandHandler
 //Do properthings when input a command.
 //Author:ShadowK
 //email:zhu.shadowk@gmail.com
@@ -15,16 +15,17 @@
 #include <cxcore.h>
 #include <cv.h>
 #include <highgui.h>
+#include "SKDefinition.h"
 using namespace std;
 
-class CommandHandler
+class SKCommandHandler
 {
 public:
 	void begin();
 	bool handle(string s);
 	bool handle(char *s);
-	CommandHandler();
-	~CommandHandler();
+	SKCommandHandler();
+	~SKCommandHandler();
 private:
-	class CommandHandlerImpl *_impl;
+	class SKCommandHandlerImpl *_impl;
 };

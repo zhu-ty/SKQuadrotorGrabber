@@ -15,21 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CommandHandler.h">
+    <ClInclude Include="SKImageDisplayer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ImageDisplayer.h">
+    <ClInclude Include="SKCommandHandler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SKDefinition.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CommandHandler.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ImageDisplayer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SKImageDisplayer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SKCommandHandler.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

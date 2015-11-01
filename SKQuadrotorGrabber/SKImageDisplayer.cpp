@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include "ImageDisplayer.h"
+#include "SKImageDisplayer.h"
 #include <mutex>
 #include <Windows.h>
 
 using namespace std;
 using namespace cv;
 
-class ImageDisplayerImpl
+class SKImageDisplayerImpl
 {
 public:
 	struct Dthread
@@ -32,10 +32,10 @@ namespace thread
 {
 	DWORD WINAPI Displayimg(LPVOID lpParamter)
 	{
-		ImageDisplayerImpl::Dthread *dp = (ImageDisplayerImpl::Dthread *)lpParamter;
+		SKImageDisplayerImpl::Dthread *dp = (SKImageDisplayerImpl::Dthread *)lpParamter;
 #ifdef RESIZE_PIC
 		IplImage *old;
-		IplImage *show = cvCreateImage(cvSize(ImageDisplayer::resize_width, ImageDisplayer::resize_height), (*(dp->p))->depth, (*(dp->p))->nChannels);
+		IplImage *show = cvCreateImage(cvSize(SKImageDisplayer::resize_width, SKImageDisplayer::resize_height), (*(dp->p))->depth, (*(dp->p))->nChannels);
 		old = nullptr;
 #endif
 		while (1)
@@ -47,7 +47,7 @@ namespace thread
 				if (old != pth || old->imageData != pth->imageData)
 				{
 					cvReleaseImage(&show);
-					show = cvCreateImage(cvSize(ImageDisplayer::resize_width, ImageDisplayer::resize_height), (*(dp->p))->depth, (*(dp->p))->nChannels);
+					show = cvCreateImage(cvSize(SKImageDisplayer::resize_width, SKImageDisplayer::resize_height), (*(dp->p))->depth, (*(dp->p))->nChannels);
 					cvResize(pth, show);
 				}
 				cvShowImage(dp->name.c_str(), show);
@@ -76,9 +76,9 @@ namespace thread
 	}
 }
 
-ImageDisplayer::ImageDisplayer()
+SKImageDisplayer::SKImageDisplayer()
 {
-	_impl = new ImageDisplayerImpl();
+	_impl = new SKImageDisplayerImpl();
 	_impl->shown = false;
 	_impl->hThread = nullptr;
 	_impl->dth.name = "My image";
@@ -86,17 +86,17 @@ ImageDisplayer::ImageDisplayer()
 	_impl->dth.stop = false;
 }
 
-ImageDisplayer::~ImageDisplayer()
+SKImageDisplayer::~SKImageDisplayer()
 {
 	delete _impl;
 }
 
-void ImageDisplayer::display(IplImage **p)
+void SKImageDisplayer::display(IplImage **p)
 {
 	display(p, "Image");
 }
 
-void ImageDisplayer::display(IplImage **p, const char *name)
+void SKImageDisplayer::display(IplImage **p, const char *name)
 {
 	if (_impl->shown == false)
 	{
@@ -109,7 +109,7 @@ void ImageDisplayer::display(IplImage **p, const char *name)
 	_impl->shown = true;
 }
 
-void ImageDisplayer::hide()
+void SKImageDisplayer::hide()
 {
 	if (_impl->shown == true)
 	{

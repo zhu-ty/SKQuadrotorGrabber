@@ -64,12 +64,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CommandHandler.h" />
-    <ClInclude Include="ImageDisplayer.h" />
+    <ClInclude Include="SKCommandHandler.h" />
+    <ClInclude Include="SKDefinition.h" />
+    <ClInclude Include="SKImageDisplayer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CommandHandler.cpp" />
-    <ClCompile Include="ImageDisplayer.cpp" />
+    <ClCompile Include="SKCommandHandler.cpp" />
+    <ClCompile Include="SKImageDisplayer.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

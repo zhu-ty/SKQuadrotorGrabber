@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "CommandHandler.h"
-#include "ImageDisplayer.h"
+#include "SKCommandHandler.h"
+#include "SKImageDisplayer.h"
 #include <vector>
 #include <string>
 
-class CommandHandlerImpl
+class SKCommandHandlerImpl
 {
 public:
 	//Compare two strings.(Case insensitive)
@@ -28,29 +28,32 @@ public:
 	void calculate();
 
 
-	IplImage *input = nullptr;
-	ImageDisplayer idis;
+	IplImage *input;
+	cv::Mat inputmat;
+	SKImageDisplayer idis;
 	const int threshold = 230;
 };
 
-CommandHandler::CommandHandler()
+SKCommandHandler::SKCommandHandler()
 {
-	_impl = new CommandHandlerImpl();
+	_impl = new SKCommandHandlerImpl();
+	_impl->input = nullptr;
 }
-CommandHandler::~CommandHandler()
+SKCommandHandler::~SKCommandHandler()
 {
+	if (_impl->input != nullptr)	cvReleaseImage(&(_impl->input));
 	delete _impl;
 }
-void CommandHandler::begin()
+void SKCommandHandler::begin()
 {
 	printf("Input command.Input \"help\" for command help.\n$");
 }
-bool CommandHandler::handle(char *s)
+bool SKCommandHandler::handle(char *s)
 {
 	string sr(s);
 	return handle(sr);
 }
-bool CommandHandler::handle(string s)
+bool SKCommandHandler::handle(string s)
 {
 	try
 	{
@@ -108,7 +111,7 @@ bool CommandHandler::handle(string s)
 	return false;
 }
 
-bool CommandHandlerImpl::compare(const string& x, const string& y)
+bool SKCommandHandlerImpl::compare(const string& x, const string& y)
 {
 	string::const_iterator p = x.begin();
 	string::const_iterator q = y.begin();
@@ -127,7 +130,7 @@ bool CommandHandlerImpl::compare(const string& x, const string& y)
 	}
 	return false;
 }
-vector<string> CommandHandlerImpl::split(string str, string pattern)
+vector<string> SKCommandHandlerImpl::split(string str, string pattern)
 {
 	int pos;
 	std::vector<std::string> result;
@@ -148,7 +151,7 @@ vector<string> CommandHandlerImpl::split(string str, string pattern)
 	}
 	return result;
 }
-void CommandHandlerImpl::help()
+void SKCommandHandlerImpl::help()
 {
 	printf("\"load <FileName>\" Load or reload a image with full location.\n");
 	printf("Sample: load C:\\Users\\WIN_20150404_144352.JPG\n");
@@ -165,15 +168,18 @@ void CommandHandlerImpl::help()
 	printf("WARNING:Do not use image which has spaces in its FileName.\n");
 
 }
-void CommandHandlerImpl::load(string s)
+void SKCommandHandlerImpl::load(string s)
 {
 	input = cvLoadImage(s.c_str(), 1);
 	if(input == nullptr)
 		printf("Wrong FileName.\n");
 	else
+	{
 		printf("Load successful.\n");
+		inputmat = cv::Mat(input, false);
+	}
 }
-void CommandHandlerImpl::save(string s)
+void SKCommandHandlerImpl::save(string s)
 {
 	if (input == nullptr)
 	{
@@ -182,22 +188,23 @@ void CommandHandlerImpl::save(string s)
 	cvSaveImage(s.c_str(), input);
 	printf("Save successful.\n");
 }
-void CommandHandlerImpl::display(string s)
+void SKCommandHandlerImpl::display(string s)
 {
 	if(input != nullptr)
 		idis.display(&input,s.c_str());
 }
-void CommandHandlerImpl::hide()
+void SKCommandHandlerImpl::hide()
 {
 	idis.hide();
 }
-void CommandHandlerImpl::exit()
+void SKCommandHandlerImpl::exit()
 {
 	hide();
 	printf("See you next time!\n");
 }
-void CommandHandlerImpl::calculate()
+void SKCommandHandlerImpl::calculate()
 {
+	//Check input and turn it into gray.
 	if (input == nullptr || (input->nChannels != 3 && input->nChannels != 1))
 		return;
 	if (input->nChannels == 3)
@@ -208,10 +215,27 @@ void CommandHandlerImpl::calculate()
 		q = input;
 		input = p;
 		cvReleaseImage(&q);
-		input = p;
 	}
-	///cvThreshold(input, input, threshold, 255, CV_THRESH_BINARY);
+
+	//Binaryzation
+	//cvThreshold(input, input, threshold, 255, CV_THRESH_BINARY);
 	cvAdaptiveThreshold(input, input, 255, 0, 0, 25);
+
+	cv::Mat temp;
+	cv::Canny(inputmat, temp, 50, 200);
+	vector<cv::Vec4i> lines;
+	cv::HoughLinesP(temp, lines, 1, CV_PI / 180, 80, 50, 10);
+	IplImage *p, *q;
+	p = cvCreateImage(cvSize(input->width, input->height), input->depth, 3);
+	cvSet(p, CV_RGB(255, 255, 255));
+	q = input;
+	cv::Mat temp2 = cv::Mat(p);
+	for (unsigned int i = 0; i < lines.size(); i++)
+		cv::line(temp2, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(0, 0, 0));
+	input = p;
+	cvReleaseImage(&q);
+
+	inputmat = cv::Mat(input);
 	printf("\n");
 }
 

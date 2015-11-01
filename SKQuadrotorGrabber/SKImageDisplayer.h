@@ -1,4 +1,4 @@
-//ImageDisplayer
+//SKImageDisplayer
 //Display a image.
 //Author:ShadowK
 //email:zhu.shadowk@gmail.com
@@ -11,20 +11,20 @@
 #include <stdio.h>
 #include <cv.h>
 #include <highgui.h>
-#define RESIZE_PIC
+#include "SKDefinition.h"
 using namespace std;
 
 
-class ImageDisplayer
+class SKImageDisplayer
 {
 public:
 	const static int resize_height = 500;
 	const static int resize_width = 500;
-	ImageDisplayer();
-	~ImageDisplayer();
+	SKImageDisplayer();
+	~SKImageDisplayer();
 	void display(IplImage **p);
 	void display(IplImage **p, const char *name);
 	void hide();
 private:
-	class ImageDisplayerImpl *_impl;
+	class SKImageDisplayerImpl *_impl;
 };

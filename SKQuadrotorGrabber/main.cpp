@@ -5,11 +5,12 @@
 //Use Ctrl+M,Ctrl+O to fold the code.
 
 #include <string>
-#include "CommandHandler.h"
+#include "SKCommandHandler.h"
+#include "SKDefinition.h"
 
 int main()
 {
-	CommandHandler cmd;
+	SKCommandHandler cmd;
 	while (1)
 	{
 		string str;
