@@ -10,6 +10,8 @@
 #include <vector>
 #include <string>
 
+#define sqr(x) ((x)*(x))
+
 class SKCommandHandlerImpl
 {
 public:
@@ -27,11 +29,17 @@ public:
 
 	void calculate();
 
+	double dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby);
+	double dot_to_dot(double pax, double pay, double pbx, double pby);
 
+	//Bigger the better.
+	/*box must have 4 points*/
+	double evaluation_squre(CvPoint2D32f *box);
+	/*distance must be 0 ~ 1*/
+	double evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance);
 	IplImage *input;
 	cv::Mat inputmat;
 	SKImageDisplayer idis;
-	const int threshold = 230;
 };
 
 SKCommandHandler::SKCommandHandler()
@@ -96,6 +104,15 @@ bool SKCommandHandler::handle(string s)
 		else if (_impl->compare(splitstr[0], "loadd"))
 		{
 			_impl->load("F:\\360Downloads\\3.jpg");
+		}
+		else if (_impl->compare(splitstr[0], "cad"))
+		{
+			printf("Calculating...\n");
+			_impl->calculate();
+		}
+		else if (_impl->compare(splitstr[0], "savd"))
+		{
+			_impl->save("C:\\Users\\ShadowK\\Desktop\\123.jpg");
 		}
 #endif
 		else
@@ -202,9 +219,9 @@ void SKCommandHandlerImpl::exit()
 	hide();
 	printf("See you next time!\n");
 }
+
 void SKCommandHandlerImpl::calculate()
 {
-	//Check input and turn it into gray.
 	if (input == nullptr || (input->nChannels != 3 && input->nChannels != 1))
 		return;
 	if (input->nChannels == 3)
@@ -214,30 +231,105 @@ void SKCommandHandlerImpl::calculate()
 		IplImage *q;
 		q = input;
 		input = p;
+		inputmat = cv::Mat(input);
 		cvReleaseImage(&q);
 	}
+	cvAdaptiveThreshold(input, input, 255, 0, CV_THRESH_BINARY_INV, 25);
 
-	//Binaryzation
-	//cvThreshold(input, input, threshold, 255, CV_THRESH_BINARY);
-	cvAdaptiveThreshold(input, input, 255, 0, 0, 25);
+	cvDilate(input, input);
 
-	inputmat = cv::Mat(input);
-	cv::Mat temp;
-	cv::Canny(inputmat, temp, 50, 200);
-	
-	vector<cv::Vec4i> lines;
-	cv::HoughLinesP(temp, lines, 1, CV_PI / 180, 80, 50, 10);
-	IplImage *p, *q;
-	p = cvCreateImage(cvSize(input->width, input->height), input->depth, 3);
-	cvSet(p, CV_RGB(255, 255, 255));
+	CvMemStorage* storage = cvCreateMemStorage(0);
+	CvSeq* contours = NULL;
+
+	IplImage *tmp = cvCloneImage(input);
+	printf("FindSEQ:%d\n", cvFindContours(tmp, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE));
+	cvReleaseImage(&tmp);
+
+	IplImage* outlineImg = cvCreateImage(cvGetSize(input), IPL_DEPTH_32F, 3);
+	int index = 0;
+	CvSeq *pCurSeq = contours;
+	CvSeq *pOldSeq = NULL;
+	while (pCurSeq)
+	{
+		double tmparea = fabs(cvContourArea(pCurSeq));
+		if (tmparea < CROSS_RECT_SIZE)//删除掉面积比较小的轮廓
+		{
+			pCurSeq = pCurSeq->h_next;
+			continue;
+		}
+		if (cvCheckContourConvexity(pCurSeq) == 1)//凸轮廓
+		{
+			pCurSeq = pCurSeq->h_next;
+			continue;
+		}
+		CvRect rect1 = cvBoundingRect(pCurSeq, 0);
+		CvBox2D rect2d = cvMinAreaRect2(pCurSeq);
+		CvPoint2D32f rect4p[4];
+		cvBoxPoints(rect2d, rect4p);
+		double a = evaluation_squre(rect4p);
+		double b = evaluation_cross(rect1, rect4p, 0.1);
+		printf("SEQ_VALUE:%lf\n", a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE));
+		if (a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE) > CROSS_THR)
+		{
+#ifdef DRAW_SEQ
+			for (int i = 0; i < 4; i++)
+				for (int j = i + 1; j < 4; j++)
+					cvLine(outlineImg, cvPoint(rect4p[i].x, rect4p[i].y), cvPoint(rect4p[j].x, rect4p[j].y), CV_RGB(0, 0, 255));
+			cvDrawContours(outlineImg, pCurSeq, CV_RGB(0, 255, 0), CV_RGB(0, 255, 0), 0, 2, CV_FILLED, cvPoint(0, 0));
+			cvRectangleR(outlineImg, rect1, CV_RGB(255, 0, 0), 1, 8, 0);
+#endif
+		}
+		pCurSeq = pCurSeq->h_next;
+	}
+	IplImage *q;
 	q = input;
-	cv::Mat temp2 = cv::Mat(p);
-	for (unsigned int i = 0; i < lines.size(); i++)
-		cv::line(temp2, cv::Point(lines[i][0], lines[i][1]), cv::Point(lines[i][2], lines[i][3]), CV_RGB(0, 0, 0));
-	input = p;
+	input = outlineImg;
+	inputmat = cv::Mat(input);
 	cvReleaseImage(&q);
 
-	inputmat = cv::Mat(input);
 	printf("\n");
 }
 
+double SKCommandHandlerImpl::dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby)
+{
+	double squre = (p0x*pay + pax*pby + pbx*p0y - p0x*pby - pax*p0y - pbx*pay);
+	return squre / dot_to_dot(pax,pay,pbx,pby);
+}
+double SKCommandHandlerImpl::dot_to_dot(double pax, double pay, double pbx, double pby)
+{
+	return sqrt(sqr(pax - pbx) + sqr(pay - pby));
+}
+
+double SKCommandHandlerImpl::evaluation_squre(CvPoint2D32f *box)
+{
+	try
+	{
+		box[3];
+	}
+	catch (...)
+	{
+		return .0;
+	}
+	double l1 = dot_to_dot(box[0].x, box[0].y, box[1].x, box[1].y);
+	double l2 = dot_to_dot(box[0].x, box[0].y, box[3].x, box[3].y);
+	return min(l1, l2) / max(l1, l2);
+}
+double SKCommandHandlerImpl::evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance)
+{
+	double diagonal = dot_to_dot(box[0].x, box[0].y, box[2].x, box[2].y);
+	double threshold = 1.0 / 4 * diagonal * distance;
+	double full = 0;
+	for (int i = rect.y; i < min(rect.y + rect.height, input->height); i++)
+		for (int j = rect.x; j < min(rect.x + rect.width, input->width); j++)
+		{
+			if (((uchar *)input->imageData)[i * input->widthStep / sizeof(uchar) + j] == 255)
+			{
+				double dis_cross = dot_to_line(j, i, box[0].x, box[0].y, box[2].x, box[2].y);
+				dis_cross = min(dis_cross, dot_to_line(j, i, box[1].x, box[1].y, box[3].x, box[3].y));
+				full = full + ((dis_cross < threshold) ? 1 : -1);
+			}
+		}
+	full = full / (4 * diagonal * threshold);
+	if (full > 1) full = 1;
+	return (full < 0) ? 0 : full;
+}

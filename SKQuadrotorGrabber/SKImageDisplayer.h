@@ -18,8 +18,10 @@ using namespace std;
 class SKImageDisplayer
 {
 public:
+#ifdef RESIZE_PIC
 	const static int resize_height = 500;
 	const static int resize_width = 500;
+#endif
 	SKImageDisplayer();
 	~SKImageDisplayer();
 	void display(IplImage **p);
