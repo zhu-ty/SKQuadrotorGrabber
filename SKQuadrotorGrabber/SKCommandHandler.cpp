@@ -270,7 +270,7 @@ void SKCommandHandlerImpl::calculate()
 		cvBoxPoints(rect2d, rect4p);
 		double a = evaluation_squre(rect4p);
 		double b = evaluation_cross(rect1, rect4p, 0.25);
-		printf("SEQ_VALUE:%lf\n", a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE));
+		printf("SEQ_VALUE:%lf Center:(%d,%d)\n", a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE), (int)rect2d.center.x, (int)rect2d.center.y);
 		if (a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE) > CROSS_THR)
 		{
 #ifdef DRAW_SEQ
