@@ -8,6 +8,6 @@
 #define RESIZE_PIC
 #define DRAW_SEQ
 
-#define CROSS_THR 0.5
+#define CROSS_THR 0.8
 #define CROSS_THR_BALANCE 0.5
 #define CROSS_RECT_SIZE 300

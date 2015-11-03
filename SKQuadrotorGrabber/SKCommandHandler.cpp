@@ -237,6 +237,8 @@ void SKCommandHandlerImpl::calculate()
 	cvAdaptiveThreshold(input, input, 255, 0, CV_THRESH_BINARY_INV, 25);
 
 	cvDilate(input, input);
+	//cvDilate(input, input);
+	//cvErode(input, input);
 
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contours = NULL;
@@ -267,7 +269,7 @@ void SKCommandHandlerImpl::calculate()
 		CvPoint2D32f rect4p[4];
 		cvBoxPoints(rect2d, rect4p);
 		double a = evaluation_squre(rect4p);
-		double b = evaluation_cross(rect1, rect4p, 0.1);
+		double b = evaluation_cross(rect1, rect4p, 0.25);
 		printf("SEQ_VALUE:%lf\n", a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE));
 		if (a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE) > CROSS_THR)
 		{
@@ -292,7 +294,7 @@ void SKCommandHandlerImpl::calculate()
 
 double SKCommandHandlerImpl::dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby)
 {
-	double squre = (p0x*pay + pax*pby + pbx*p0y - p0x*pby - pax*p0y - pbx*pay);
+	double squre = abs(p0x*pay + pax*pby + pbx*p0y - p0x*pby - pax*p0y - pbx*pay);
 	return squre / dot_to_dot(pax,pay,pbx,pby);
 }
 double SKCommandHandlerImpl::dot_to_dot(double pax, double pay, double pbx, double pby)
@@ -330,6 +332,9 @@ double SKCommandHandlerImpl::evaluation_cross(CvRect rect, CvPoint2D32f *box, do
 			}
 		}
 	full = full / (4 * diagonal * threshold);
+
+	full *= 2;
+
 	if (full > 1) full = 1;
 	return (full < 0) ? 0 : full;
 }
