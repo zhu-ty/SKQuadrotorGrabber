@@ -24,6 +24,9 @@
     <ClInclude Include="SKDefinition.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="SKCommandHandlerVideo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,6 +36,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SKCommandHandler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SKCommandHandlerVideo.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

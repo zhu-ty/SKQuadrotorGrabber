@@ -65,11 +65,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="SKCommandHandler.h" />
+    <ClInclude Include="SKCommandHandlerVideo.h" />
     <ClInclude Include="SKDefinition.h" />
     <ClInclude Include="SKImageDisplayer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SKCommandHandler.cpp" />
+    <ClCompile Include="SKCommandHandlerVideo.cpp" />
     <ClCompile Include="SKImageDisplayer.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

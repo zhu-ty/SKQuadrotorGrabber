@@ -5,12 +5,23 @@
 //Use Ctrl+M,Ctrl+O to fold the code.
 
 #include <string>
-#include "SKCommandHandler.h"
 #include "SKDefinition.h"
+
+#ifdef PIC_MODE
+#include "SKCommandHandler.h"
+#else
+#include "SKCommandHandlerVideo.h"
+#endif
+
+
 
 int main()
 {
+#ifdef PIC_MODE
 	SKCommandHandler cmd;
+#else
+	SKCommandHandlerVideo cmd;
+#endif
 	while (1)
 	{
 		string str;
