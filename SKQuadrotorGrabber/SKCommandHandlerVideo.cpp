@@ -223,9 +223,11 @@ void SKCommandHandlerVideoImpl::calculate()
 	CvVideoWriter* wrVideo1 = cvCreateVideoWriter("TEST.avi", CV_FOURCC('M', 'J', 'P', 'G'), fps, cvGetSize(frame));
 	while (1)
 	{
+		//获取每帧图像
 		frame = cvQueryFrame(input);
 		if (frame == NULL)
 			break;
+		//若上一帧有输出则使用带帧间信息的判断方式
 		if (ans.x < 0 || ans.y < 0)
 			ans = getquadrotor(frame);
 		else
@@ -246,7 +248,9 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 	CvPoint ret = cvPoint(-1, -1);
 	if (picc == nullptr || (picc->nChannels != 3 && picc->nChannels != 1))
 		return ret;
+	//保护原图（如需要显示则应当保护原图）
 	IplImage *pic = cvCloneImage(picc);
+	//Step 1:灰度化
 	if (pic->nChannels == 3)
 	{
 		IplImage *p = cvCreateImage(cvSize(pic->width, pic->height), pic->depth, 1);
@@ -254,35 +258,56 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 		cvReleaseImage(&pic);
 		pic = p;
 	}
+
+	//Step 2:自适应二值化
+	//TODO(ShadowK):应当改进二值化算法
 	cvAdaptiveThreshold(pic, pic, 255, 0, CV_THRESH_BINARY_INV, 25);
+
+	//Step 3:膨胀一次
 	cvDilate(pic, pic);
+
+	//Step 4:找出图像所有轮廓
 	CvMemStorage* storage = cvCreateMemStorage(0);
 	CvSeq* contours = NULL;
-	cvFindContours(pic, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+	IplImage *tmp = cvCloneImage(pic);//为了不破坏二值化的pic，需要做保护
+	cvFindContours(tmp, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+	cvReleaseImage(&tmp);
 	CvSeq *pCurSeq = contours;
 	CvSeq *pOldSeq = NULL;
 	vector<SKResult> results;
+	//枚举每个轮廓
 	while (pCurSeq)
 	{
+		//删除掉面积比较小的轮廓
 		double tmparea = fabs(cvContourArea(pCurSeq));
-		if (tmparea < CROSS_RECT_SIZE)//删除掉面积比较小的轮廓
+		if (tmparea < CROSS_RECT_SIZE)
 		{
 			pCurSeq = pCurSeq->h_next;
 			continue;
 		}
-		if (cvCheckContourConvexity(pCurSeq) == 1)//凸轮廓
+		//删除凸轮廓
+		if (cvCheckContourConvexity(pCurSeq) == 1)
 		{
 			pCurSeq = pCurSeq->h_next;
 			continue;
 		}
-		CvRect rect1 = cvBoundingRect(pCurSeq, 0);
-		CvBox2D rect2d = cvMinAreaRect2(pCurSeq);
-		CvPoint2D32f rect4p[4];
+		//Step 5:寻找小矩形与大矩形
+		CvRect rect1 = cvBoundingRect(pCurSeq, 0);//大矩形
+		CvBox2D rect2d = cvMinAreaRect2(pCurSeq);//小矩形（最小邻接）
+		CvPoint2D32f rect4p[4];//最小邻接矩形的四个点
 		cvBoxPoints(rect2d, rect4p);
+
+		//Step 6: EvaluationA:小矩形的宽长比
 		double a = evaluation_squre(rect4p);
+
+		//Step 7: EvaluationB:轮廓内像素点在小矩形对角线上的集中程度
 		double b = evaluation_cross(rect1, rect4p, 0.25, pic);
+
+		//总的Evaluation
 		double t = a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE);
 		printf("SEQ_VALUE:%lf Center:(%d,%d)\n", t, (int)rect2d.center.x, (int)rect2d.center.y);
+
+		//Step 8: 利用帧间信息（超过两倍DIFF_THR则为零，否则从0增益到1.5）
 		if (LastPoint != NULL)
 		{
 			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, LastPoint->x, LastPoint->y);
@@ -295,6 +320,8 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 				weight = 1.5;
 			t = t * weight;
 		}
+
+		//Step 9:超过阈值则置入Vector中
 		if (t > CROSS_THR)
 		{
 			SKResult r;
@@ -305,6 +332,8 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 		pCurSeq = pCurSeq->h_next;
 	}
 	cvReleaseImage(&pic);
+
+	//Step 10:找出Evaluation的最大值并输出
 	if (results.size() == 0)
 		return ret;
 	int im = 0;
