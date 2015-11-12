@@ -16,6 +16,7 @@
 #include <cv.h>
 #include <highgui.h>
 #include "SKDefinition.h"
+#include "SKCommandHandlerVideo.h"
 using namespace std;
 
 class SKCommandHandler

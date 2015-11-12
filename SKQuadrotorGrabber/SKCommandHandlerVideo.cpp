@@ -27,16 +27,18 @@ public:
 
 	void calculate();
 
-	double dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby);
-	double dot_to_dot(double pax, double pay, double pbx, double pby);
+	static double dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby);
+	static double dot_to_dot(double pax, double pay, double pbx, double pby);
 
 	//Bigger the better.
 	/*box must have 4 points*/
-	double evaluation_squre(CvPoint2D32f *box);
+	static double evaluation_squre(CvPoint2D32f *box);
 	/*distance must be 0 ~ 1*/
-	double evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance, IplImage *in);
+	static double evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance, IplImage *in);
 
-	CvPoint getquadrotor(const IplImage *picc, CvPoint *LastPoint = NULL);
+	static void saveimage(const IplImage *p, const string s);
+
+	static CvPoint getquadrotor(const IplImage *picc, CvPoint *LastPoint = NULL);
 
 	CvCapture *input;
 	SKImageDisplayer idis;
@@ -58,6 +60,11 @@ SKCommandHandlerVideo::~SKCommandHandlerVideo()
 	if (_impl->input != nullptr)	cvReleaseCapture(&_impl->input);
 	delete _impl;
 }
+CvPoint SKCommandHandlerVideo::GetDrone(const IplImage *pic)
+{
+	return SKCommandHandlerVideoImpl::getquadrotor(pic);
+}
+
 void SKCommandHandlerVideo::begin()
 {
 	printf("Input command.Input \"help\" for command help.\n$");
@@ -235,6 +242,8 @@ void SKCommandHandlerVideoImpl::calculate()
 		if (ans.x > 0 && ans.y > 0)
 			cvCircle(frame, ans, CIRCLE_RADIUS, CV_RGB(255, 0, 0),2);
 		cvWriteFrame(wrVideo1, frame);
+		frame_count_now++;
+		printf("%d%%\n", frame_count_now * 100 / frame_count);
 		//cvWaitKey((double)1000 / fps);
 	}
 	cvReleaseVideoWriter(&wrVideo1);
@@ -249,7 +258,11 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 	if (picc == nullptr || (picc->nChannels != 3 && picc->nChannels != 1))
 		return ret;
 	//保护原图（如需要显示则应当保护原图）
+#ifdef CLONE_IMAGE
 	IplImage *pic = cvCloneImage(picc);
+#else
+	IplImage *pic = picc;
+#endif
 	//Step 1:灰度化
 	if (pic->nChannels == 3)
 	{
@@ -259,12 +272,20 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 		pic = p;
 	}
 
+	saveimage(pic, "S1.jpg");
+
 	//Step 2:自适应二值化
 	//TODO(ShadowK):应当改进二值化算法
 	cvAdaptiveThreshold(pic, pic, 255, 0, CV_THRESH_BINARY_INV, 25);
 
-	//Step 3:膨胀一次
+	saveimage(pic, "S2.jpg");
+
+	//Step 3:腐蚀膨胀一次
+	cvErode(pic, pic);
 	cvDilate(pic, pic);
+	cvDilate(pic, pic);
+
+	saveimage(pic, "S3.jpg");
 
 	//Step 4:找出图像所有轮廓
 	CvMemStorage* storage = cvCreateMemStorage(0);
@@ -275,6 +296,11 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 	CvSeq *pCurSeq = contours;
 	CvSeq *pOldSeq = NULL;
 	vector<SKResult> results;
+
+#ifdef DRAW_SEQ
+	IplImage* outlineImg = cvCreateImage(cvGetSize(pic), IPL_DEPTH_32F, 3);
+#endif
+
 	//枚举每个轮廓
 	while (pCurSeq)
 	{
@@ -328,10 +354,22 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 			r.p = cvPoint(static_cast<int>(rect2d.center.x), static_cast<int>(rect2d.center.y));
 			r.trust = t;
 			results.push_back(r);
+#ifdef DRAW_SEQ
+			for (int i = 0; i < 4; i++)
+				for (int j = i + 1; j < 4; j++)
+					cvLine(outlineImg, cvPoint(rect4p[i].x, rect4p[i].y), cvPoint(rect4p[j].x, rect4p[j].y), CV_RGB(0, 0, 255));
+			cvDrawContours(outlineImg, pCurSeq, CV_RGB(0, 255, 0), CV_RGB(0, 255, 0), 0, 2, CV_FILLED, cvPoint(0, 0));
+			cvRectangleR(outlineImg, rect1, CV_RGB(255, 0, 0), 1, 8, 0);
+#endif
 		}
 		pCurSeq = pCurSeq->h_next;
 	}
 	cvReleaseImage(&pic);
+
+#ifdef DRAW_SEQ
+	saveimage(outlineImg, "S10.jpg");
+	cvReleaseImage(&outlineImg);
+#endif
 
 	//Step 10:找出Evaluation的最大值并输出
 	if (results.size() == 0)
@@ -391,4 +429,14 @@ double SKCommandHandlerVideoImpl::evaluation_cross(CvRect rect, CvPoint2D32f *bo
 
 	if (full > 1) full = 1;
 	return (full < 0) ? 0 : full;
+}
+
+void SKCommandHandlerVideoImpl::saveimage(const IplImage *p, const string s)
+{
+	if (p == nullptr)
+		return;
+#ifdef SAVE_STEP
+	cvSaveImage(s.c_str(), p);
+#endif
+	return;
 }

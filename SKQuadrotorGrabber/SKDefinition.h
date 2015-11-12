@@ -7,10 +7,10 @@
 
 //#define RESIZE_PIC
 #define DRAW_SEQ
-//#define PIC_MODE
+#define PIC_MODE
 
 #ifdef PIC_MODE
-#define CROSS_THR 0.8
+#define CROSS_THR 0.75
 #else
 #define CROSS_THR 0.75
 #endif
@@ -21,3 +21,7 @@
 #define DIFF_THR 30
 
 #define CIRCLE_RADIUS 10
+
+#define CLONE_IMAGE
+
+#define SAVE_STEP

@@ -29,14 +29,14 @@ public:
 
 	void calculate();
 
-	double dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby);
-	double dot_to_dot(double pax, double pay, double pbx, double pby);
+	//double dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby);
+	//double dot_to_dot(double pax, double pay, double pbx, double pby);
 
-	//Bigger the better.
-	/*box must have 4 points*/
-	double evaluation_squre(CvPoint2D32f *box);
-	/*distance must be 0 ~ 1*/
-	double evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance);
+	////Bigger the better.
+	///*box must have 4 points*/
+	//double evaluation_squre(CvPoint2D32f *box);
+	///*distance must be 0 ~ 1*/
+	//double evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance);
 	IplImage *input;
 	cv::Mat inputmat;
 	SKImageDisplayer idis;
@@ -224,117 +224,127 @@ void SKCommandHandlerImpl::calculate()
 {
 	if (input == nullptr || (input->nChannels != 3 && input->nChannels != 1))
 		return;
-	if (input->nChannels == 3)
-	{
-		IplImage *p = cvCreateImage(cvSize(input->width, input->height), input->depth, 1);
-		cvCvtColor(input, p, CV_BGR2GRAY);
-		IplImage *q;
-		q = input;
-		input = p;
-		inputmat = cv::Mat(input);
-		cvReleaseImage(&q);
-	}
-	cvAdaptiveThreshold(input, input, 255, 0, CV_THRESH_BINARY_INV, 25);
-
-	cvDilate(input, input);
-	//cvDilate(input, input);
-	//cvErode(input, input);
-
-	CvMemStorage* storage = cvCreateMemStorage(0);
-	CvSeq* contours = NULL;
-
-	IplImage *tmp = cvCloneImage(input);
-	printf("FindSEQ:%d\n", cvFindContours(tmp, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE));
-	cvReleaseImage(&tmp);
-
-	IplImage* outlineImg = cvCreateImage(cvGetSize(input), IPL_DEPTH_32F, 3);
-	int index = 0;
-	CvSeq *pCurSeq = contours;
-	CvSeq *pOldSeq = NULL;
-	while (pCurSeq)
-	{
-		double tmparea = fabs(cvContourArea(pCurSeq));
-		if (tmparea < CROSS_RECT_SIZE)//删除掉面积比较小的轮廓
-		{
-			pCurSeq = pCurSeq->h_next;
-			continue;
-		}
-		if (cvCheckContourConvexity(pCurSeq) == 1)//凸轮廓
-		{
-			pCurSeq = pCurSeq->h_next;
-			continue;
-		}
-		CvRect rect1 = cvBoundingRect(pCurSeq, 0);
-		CvBox2D rect2d = cvMinAreaRect2(pCurSeq);
-		CvPoint2D32f rect4p[4];
-		cvBoxPoints(rect2d, rect4p);
-		double a = evaluation_squre(rect4p);
-		double b = evaluation_cross(rect1, rect4p, 0.25);
-		printf("SEQ_VALUE:%lf Center:(%d,%d)\n", a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE), (int)rect2d.center.x, (int)rect2d.center.y);
-		if (a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE) > CROSS_THR)
-		{
-#ifdef DRAW_SEQ
-			for (int i = 0; i < 4; i++)
-				for (int j = i + 1; j < 4; j++)
-					cvLine(outlineImg, cvPoint(rect4p[i].x, rect4p[i].y), cvPoint(rect4p[j].x, rect4p[j].y), CV_RGB(0, 0, 255));
-			cvDrawContours(outlineImg, pCurSeq, CV_RGB(0, 255, 0), CV_RGB(0, 255, 0), 0, 2, CV_FILLED, cvPoint(0, 0));
-			cvRectangleR(outlineImg, rect1, CV_RGB(255, 0, 0), 1, 8, 0);
-#endif
-		}
-		pCurSeq = pCurSeq->h_next;
-	}
-	IplImage *q;
-	q = input;
-	input = outlineImg;
-	inputmat = cv::Mat(input);
-	cvReleaseImage(&q);
-
+	CvPoint ans;
+	ans = SKCommandHandlerVideo::GetDrone(input);
+	if (ans.x > 0 && ans.y > 0)
+		cvCircle(input, ans, CIRCLE_RADIUS, CV_RGB(255, 0, 0), 2);
+	#pragma region OLD
+	//if (input->nChannels == 3)
+	//{
+	//	IplImage *p = cvCreateImage(cvSize(input->width, input->height), input->depth, 1);
+	//	cvCvtColor(input, p, CV_BGR2GRAY);
+	//	IplImage *q;
+	//	q = input;
+	//	input = p;
+	//	inputmat = cv::Mat(input);
+	//	cvReleaseImage(&q);
+	//}
+//	cvAdaptiveThreshold(input, input, 255, 0, CV_THRESH_BINARY_INV, 25);
+//
+//	cvDilate(input, input);
+//	//cvDilate(input, input);
+//	//cvErode(input, input);
+//
+//	CvMemStorage* storage = cvCreateMemStorage(0);
+//	CvSeq* contours = NULL;
+//
+//	IplImage *tmp = cvCloneImage(input);
+//	printf("FindSEQ:%d\n", cvFindContours(tmp, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE));
+//	cvReleaseImage(&tmp);
+//
+//	IplImage* outlineImg = cvCreateImage(cvGetSize(input), IPL_DEPTH_32F, 3);
+//	int index = 0;
+//	CvSeq *pCurSeq = contours;
+//	CvSeq *pOldSeq = NULL;
+//	while (pCurSeq)
+//	{
+//		double tmparea = fabs(cvContourArea(pCurSeq));
+//		if (tmparea < CROSS_RECT_SIZE)//删除掉面积比较小的轮廓
+//		{
+//			pCurSeq = pCurSeq->h_next;
+//			continue;
+//		}
+//		if (cvCheckContourConvexity(pCurSeq) == 1)//凸轮廓
+//		{
+//			pCurSeq = pCurSeq->h_next;
+//			continue;
+//		}
+//		CvRect rect1 = cvBoundingRect(pCurSeq, 0);
+//		CvBox2D rect2d = cvMinAreaRect2(pCurSeq);
+//		CvPoint2D32f rect4p[4];
+//		cvBoxPoints(rect2d, rect4p);
+//		double a = evaluation_squre(rect4p);
+//		double b = evaluation_cross(rect1, rect4p, 0.25);
+//		printf("SEQ_VALUE:%lf Center:(%d,%d)\n", a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE), (int)rect2d.center.x, (int)rect2d.center.y);
+//		if (a * CROSS_THR_BALANCE + b * (1 - CROSS_THR_BALANCE) > CROSS_THR)
+//		{
+//#ifdef DRAW_SEQ
+//			for (int i = 0; i < 4; i++)
+//				for (int j = i + 1; j < 4; j++)
+//					cvLine(outlineImg, cvPoint(rect4p[i].x, rect4p[i].y), cvPoint(rect4p[j].x, rect4p[j].y), CV_RGB(0, 0, 255));
+//			cvDrawContours(outlineImg, pCurSeq, CV_RGB(0, 255, 0), CV_RGB(0, 255, 0), 0, 2, CV_FILLED, cvPoint(0, 0));
+//			cvRectangleR(outlineImg, rect1, CV_RGB(255, 0, 0), 1, 8, 0);
+//#endif
+//		}
+//		pCurSeq = pCurSeq->h_next;
+//	}
+//	IplImage *q;
+//	q = input;
+//	input = outlineImg;
+//	inputmat = cv::Mat(input);
+//	cvReleaseImage(&q);
+	#pragma endregion
 	printf("\n");
 }
 
-double SKCommandHandlerImpl::dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby)
-{
-	double squre = abs(p0x*pay + pax*pby + pbx*p0y - p0x*pby - pax*p0y - pbx*pay);
-	return squre / dot_to_dot(pax,pay,pbx,pby);
-}
-double SKCommandHandlerImpl::dot_to_dot(double pax, double pay, double pbx, double pby)
-{
-	return sqrt(sqr(pax - pbx) + sqr(pay - pby));
-}
 
-double SKCommandHandlerImpl::evaluation_squre(CvPoint2D32f *box)
-{
-	try
-	{
-		box[3];
-	}
-	catch (...)
-	{
-		return .0;
-	}
-	double l1 = dot_to_dot(box[0].x, box[0].y, box[1].x, box[1].y);
-	double l2 = dot_to_dot(box[0].x, box[0].y, box[3].x, box[3].y);
-	return min(l1, l2) / max(l1, l2);
-}
-double SKCommandHandlerImpl::evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance)
-{
-	double diagonal = dot_to_dot(box[0].x, box[0].y, box[2].x, box[2].y);
-	double threshold = 1.0 / 4 * diagonal * distance;
-	double full = 0;
-	for (int i = rect.y; i < min(rect.y + rect.height, input->height); i++)
-		for (int j = rect.x; j < min(rect.x + rect.width, input->width); j++)
-		{
-			if (((uchar *)input->imageData)[i * input->widthStep / sizeof(uchar) + j] == 255)
-			{
-				double dis_cross = dot_to_line(j, i, box[0].x, box[0].y, box[2].x, box[2].y);
-				dis_cross = min(dis_cross, dot_to_line(j, i, box[1].x, box[1].y, box[3].x, box[3].y));
-				full = full + ((dis_cross < threshold) ? 1 : -1);
-			}
-		}
-	full = full / (4 * diagonal * threshold);
+#pragma region OLD
 
-	full *= 2;
+//double SKCommandHandlerImpl::dot_to_line(double p0x, double p0y, double pax, double pay, double pbx, double pby)
+//{
+//	double squre = abs(p0x*pay + pax*pby + pbx*p0y - p0x*pby - pax*p0y - pbx*pay);
+//	return squre / dot_to_dot(pax,pay,pbx,pby);
+//}
+//double SKCommandHandlerImpl::dot_to_dot(double pax, double pay, double pbx, double pby)
+//{
+//	return sqrt(sqr(pax - pbx) + sqr(pay - pby));
+//}
+//
+//double SKCommandHandlerImpl::evaluation_squre(CvPoint2D32f *box)
+//{
+//	try
+//	{
+//		box[3];
+//	}
+//	catch (...)
+//	{
+//		return .0;
+//	}
+//	double l1 = dot_to_dot(box[0].x, box[0].y, box[1].x, box[1].y);
+//	double l2 = dot_to_dot(box[0].x, box[0].y, box[3].x, box[3].y);
+//	return min(l1, l2) / max(l1, l2);
+//}
+//double SKCommandHandlerImpl::evaluation_cross(CvRect rect, CvPoint2D32f *box, double distance)
+//{
+//	double diagonal = dot_to_dot(box[0].x, box[0].y, box[2].x, box[2].y);
+//	double threshold = 1.0 / 4 * diagonal * distance;
+//	double full = 0;
+//	for (int i = rect.y; i < min(rect.y + rect.height, input->height); i++)
+//		for (int j = rect.x; j < min(rect.x + rect.width, input->width); j++)
+//		{
+//			if (((uchar *)input->imageData)[i * input->widthStep / sizeof(uchar) + j] == 255)
+//			{
+//				double dis_cross = dot_to_line(j, i, box[0].x, box[0].y, box[2].x, box[2].y);
+//				dis_cross = min(dis_cross, dot_to_line(j, i, box[1].x, box[1].y, box[3].x, box[3].y));
+//				full = full + ((dis_cross < threshold) ? 1 : -1);
+//			}
+//		}
+//	full = full / (4 * diagonal * threshold);
+//
+//	full *= 2;
+//
+//	if (full > 1) full = 1;
+//	return (full < 0) ? 0 : full;
+//}
 
-	if (full > 1) full = 1;
-	return (full < 0) ? 0 : full;
-}
+#pragma endregion

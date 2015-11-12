@@ -26,6 +26,7 @@ public:
 	bool handle(char *s);
 	SKCommandHandlerVideo();
 	~SKCommandHandlerVideo();
+	static CvPoint GetDrone(const IplImage *pic);
 private:
 	class SKCommandHandlerVideoImpl *_impl;
 };
