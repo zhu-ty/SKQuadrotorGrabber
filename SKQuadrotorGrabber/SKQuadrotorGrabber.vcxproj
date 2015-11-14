@@ -68,6 +68,7 @@
     <ClInclude Include="SKCommandHandlerVideo.h" />
     <ClInclude Include="SKDefinition.h" />
     <ClInclude Include="SKImageDisplayer.h" />
+    <ClInclude Include="TimeLogger.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SKCommandHandler.cpp" />
