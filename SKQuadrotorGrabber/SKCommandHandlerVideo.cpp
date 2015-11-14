@@ -14,6 +14,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <ctime>
+
+
 using namespace std;
 
 #include <opencv2/opencv.hpp>
@@ -129,7 +131,7 @@ bool SKCommandHandlerVideo::handle(string s)
 #ifdef _DEBUG
 		else if (_impl->compare(splitstr[0], "loadd"))
 		{
-			_impl->load("F:\\360Downloads\\3.jpg");
+			//_impl->load("F:\\360Downloads\\3.jpg");
 		}
 		else if (_impl->compare(splitstr[0], "cad"))
 		{
@@ -236,6 +238,7 @@ void SKCommandHandlerVideoImpl::calculate()
 {
 	if (input == nullptr)
 		return;
+	time_t timer = time(NULL);
 	int frame_count = (int)cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT);
 	double fps = cvGetCaptureProperty(input, CV_CAP_PROP_FPS);
 	if (frame_count == 0)	return;
@@ -268,11 +271,14 @@ void SKCommandHandlerVideoImpl::calculate()
 			cvCircle(frame, ans, CIRCLE_RADIUS, CV_RGB(255, 0, 0),2);
 		cvWriteFrame(wrVideo1, frame);
 		frame_count_now++;
-		printf("%d%%\n", frame_count_now * 100 / frame_count);
+		if (frame_count_now * 100 / frame_count != (frame_count_now - SKIP) * 100 / frame_count)
+			printf("%d%%\n", frame_count_now * 100 / frame_count);
 		//cvWaitKey((double)1000 / fps);
 	}
 	cvReleaseVideoWriter(&wrVideo1);
 	//idis.hide();
+	printf("%d seconds are used, total frames processed : ", (time(NULL) - timer));
+	printf("%d", frame_count / SKIP);
 	printf("\n");
 }
 
@@ -318,6 +324,7 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 	IplImage pp = (Mat)tmpmre;
 	pic = &pp;
 	cvThreshold(pic, pic, 10, 255, CV_THRESH_BINARY);
+	saveimage(pic, "S2.jpg");
 	cvDilate(pic, pic);
 #endif
 	saveimage(pic, "S3.jpg");
@@ -373,7 +380,13 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 		//Step 8: 利用帧间信息（超过两倍DIFF_THR则为零，否则从0增益到1.5）
 		if (LastPoint != NULL)
 		{
+#ifdef USE_DoG
+			double xt = (LastPoint->x) / 2.0;
+			double yt = (LastPoint->y) / 2.0;
+			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, xt, yt);
+#else
 			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, LastPoint->x, LastPoint->y);
+#endif
 			double weight = 1;
 			if (distance_dif > 2 * DIFF_THR)
 				weight = 0;
@@ -416,7 +429,7 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(const IplImage *picc, CvPoint *L
 	if (results.size() == 0)
 		return ret;
 	int im = 0;
-	for (int i = 0; i < results.size(); i++)
+	for (unsigned int i = 0; i < results.size(); i++)
 	{
 		if (results[i].trust > results[im].trust)
 			im = i;
