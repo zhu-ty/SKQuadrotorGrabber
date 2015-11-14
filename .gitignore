@@ -3,7 +3,10 @@
  
 # Special
 *.avi
- 
+*.mp4
+*.jpg
+*.bmp
+
 # User-specific files
 *.suo
 *.user
