@@ -6,11 +6,11 @@
 //Use Ctrl+M,Ctrl+O to fold the code.
 
 
-//#define PIC_MODE
+#define PIC_MODE
 
 #ifdef PIC_MODE
 /*核心衡量阈值*/
-#define CROSS_THR 0.8
+#define CROSS_THR 0.7
 /*保存中间步骤（仅限处理图片时）*/
 #define SAVE_STEP
 #ifdef SAVE_STEP
@@ -30,6 +30,8 @@
 #define OUTPUT_AVI
 #endif
 
+/*使用DoG算法代替自适应二值化算法*/
+//#define USE_DoG
 /*两类权衡算法占比*/
 #define CROSS_THR_BALANCE 0.5
 /*轮廓筛选大小阈值*/
@@ -41,8 +43,6 @@
 //#define SHOW_POINT
 /*复制待处理图片*/
 #define CLONE_IMAGE
-/*使用DoG算法代替自适应二值化算法*/
-#define USE_DoG
 
 
 //TODOList:
