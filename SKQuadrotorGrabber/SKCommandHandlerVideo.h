@@ -7,15 +7,10 @@
 
 #pragma once
 
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-#include <conio.h>
-#include <cxcore.h>
-#include <cv.h>
-#include <highgui.h>
+
 #include "SKDefinition.h"
+#include <iostream>
+#include <cv.h>
 using namespace std;
 
 class SKCommandHandlerVideo

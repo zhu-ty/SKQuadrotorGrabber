@@ -9,6 +9,13 @@
 #include "SKImageDisplayer.h"
 #include <vector>
 #include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <conio.h>
+#include <cxcore.h>
+#include <cv.h>
+#include <highgui.h>
 
 #define sqr(x) ((x)*(x))
 

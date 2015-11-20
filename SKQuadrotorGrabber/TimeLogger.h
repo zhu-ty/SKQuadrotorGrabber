@@ -4,8 +4,10 @@
 //email:zhu.shadowk@gmail.com
 //2015.11.15
 //Use Ctrl+M,Ctrl+O to fold the code.
-
+#ifndef TIME_LOGGER
+#define TIME_LOGGER
 #pragma once
+#pragma warning (disable:4018)
 
 #include <iostream>
 #include <stdio.h>
@@ -16,7 +18,7 @@
 class TimeLogger
 {
 private:
-	static long gettime()
+	long gettime()
 	{
 		//clock_t clockaaa = clock();
 		//long time_elapsed = long(clockaaa);
@@ -25,39 +27,58 @@ private:
 		QueryPerformanceCounter(&re);
 		return (long)re.QuadPart;
 	}
-public:
-	static std::vector<unsigned int> timeelapsed;
-	static std::vector<long> start;
-	static void restart(int num)
-	{
-		timeelapsed.clear();
-		start.clear();
-		for (int i = 0; i < num; i++)
-		{
-			timeelapsed.push_back(0);
-			start.push_back(0);
-		}
-	}
-	static void starttimer(int c)
-	{
-		if (c >= start.size())
-			return;
-		start[c] = gettime();
-		return;
-	}
-	static void recordtimer(int c)
-	{
-		if (c >= start.size())
-			return;
-		timeelapsed[c] += (gettime() - start[c]);
-	}
-	static long Frequency()
+	long long Frequency()
 	{
 		LARGE_INTEGER re;
 		QueryPerformanceFrequency(&re);
 		return re.QuadPart;
 	}
-};
+	std::vector<unsigned int> timeelapsed;
+	std::vector<long> start;
+public:
 
-std::vector<unsigned int> TimeLogger::timeelapsed;
-std::vector<long> TimeLogger::start;
+	void restart(int n)
+	{
+		if (n < timeelapsed.size())
+			timeelapsed[n] = 0;
+	}
+	void starttimer(int n)
+	{
+		if (n >= start.size())
+			start.push_back(gettime());
+		else
+			start[n] = gettime();
+		return;
+	}
+	void recordtimer(int n)
+	{
+		if (n >= timeelapsed.size())
+		{
+			if (n < start.size())
+				timeelapsed.push_back(gettime() - start[n]);
+		}
+		else
+			timeelapsed[n] += (gettime() - start[n]);
+	}
+
+	void s(int n)
+	{
+		return starttimer(n);
+	}
+	void r(int n)
+	{
+		return recordtimer(n);
+	}
+	double get_n_elapsed(int n)
+	{
+		if (n < timeelapsed.size())
+			return 1.0*1e3*(timeelapsed[n]) / Frequency();
+		return -1;
+	}
+	int get_num()
+	{
+		return timeelapsed.size();
+	}
+};
+#pragma warning (default:4018)
+#endif

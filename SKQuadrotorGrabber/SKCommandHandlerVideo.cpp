@@ -16,6 +16,15 @@
 #include <cstdio>
 #include <ctime>
 
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <conio.h>
+#include <cxcore.h>
+#include <cv.h>
+#include <highgui.h>
+
 
 using namespace std;
 
@@ -213,6 +222,8 @@ void SKCommandHandlerVideoImpl::help()
 void SKCommandHandlerVideoImpl::load(string s)
 {
 	//input = cvLoadImage(s.c_str(), 1);
+	if (input != nullptr)
+		cvReleaseCapture(&input);
 	input = cvCreateFileCapture(s.c_str());
 	if(input == nullptr)
 		printf("Wrong FileName.\n");
@@ -252,13 +263,10 @@ void SKCommandHandlerVideoImpl::calculate()
 #ifdef OUTPUT_AVI
 	CvVideoWriter* wrVideo1 = cvCreateVideoWriter("TEST.avi", CV_FOURCC('M', 'J', 'P', 'G'), fps, cvGetSize(frame));
 #endif
-	TimeLogger::restart(6);
 	while (1)
 	{
 		//获取每帧图像
-		TimeLogger::starttimer(5);
 		frame = cvQueryFrame(input);
-		TimeLogger::recordtimer(5);
 		if (frame == NULL)
 			break;
 #ifdef SKIP
@@ -290,15 +298,12 @@ void SKCommandHandlerVideoImpl::calculate()
 	//idis.hide();
 	printf("%d seconds are used, total frames processed : ", (time(NULL) - timer));
 	printf("%d\n", frame_count / SKIP);
-	for (int i = 0; i < 6; i++)
-		printf("%f\n", 1.0*1e3*(TimeLogger::timeelapsed[i])/TimeLogger::Frequency());
 #endif
 	printf("\n");
 }
 
 CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoint)
 {
-	//TimeLogger::restart(5);
 	CvPoint ret = cvPoint(-1, -1);
 	if (picc == nullptr || (picc->nChannels != 3 && picc->nChannels != 1))
 		return ret;
@@ -308,7 +313,6 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 #else
 	IplImage *pic = picc;
 #endif
-	TimeLogger::starttimer(0);
 #ifndef USE_DoG
 	//Step 1:灰度化
 	if (pic->nChannels == 3)
@@ -318,16 +322,14 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 		cvReleaseImage(&pic);
 		pic = p;
 	}
-
 	saveimage(pic, "S1.jpg");
 
 	//Step 2:自适应二值化
-	//TODO(ShadowK):应当改进二值化算法
+	//TODO(_SHADOWK):应当改进二值化算法
 	cvAdaptiveThreshold(pic, pic, 255, 0, CV_THRESH_BINARY_INV, 25);
-	Mat tmpm(pic);
-	medianBlur(tmpm, tmpm, 3);
+	//Mat tmpm(pic);
+	//medianBlur(tmpm, tmpm, 5);
 	saveimage(pic, "S2.jpg");
-
 	//Step 3:腐蚀膨胀一次
 	//cvErode(pic, pic);
 	//cvDilate(pic, pic);
@@ -345,8 +347,6 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	saveimage(pic, "S2.jpg");
 	cvDilate(pic, pic);
 #endif
-	TimeLogger::recordtimer(0);
-	TimeLogger::starttimer(1);
 	saveimage(pic, "S3.jpg");
 	//Step 4:找出图像所有轮廓
 	CvMemStorage* storage = cvCreateMemStorage(0);
@@ -357,15 +357,12 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	CvSeq *pCurSeq = contours;
 	CvSeq *pOldSeq = NULL;
 	vector<SKResult> results;
-	TimeLogger::recordtimer(1);
 #ifdef DRAW_SEQ
 	IplImage* outlineImg = cvCreateImage(cvGetSize(pic), IPL_DEPTH_32F, 3);
 #endif
-
 	//枚举每个轮廓
 	while (pCurSeq)
 	{
-		TimeLogger::starttimer(2);
 		//删除掉面积比较小的轮廓
 		double tmparea = fabs(cvContourArea(pCurSeq));
 		if (tmparea < CROSS_RECT_SIZE)
@@ -379,8 +376,6 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 			pCurSeq = pCurSeq->h_next;
 			continue;
 		}
-		TimeLogger::recordtimer(2);
-		TimeLogger::starttimer(3);
 		//Step 5:寻找小矩形与大矩形
 		CvRect rect1 = cvBoundingRect(pCurSeq, 0);//大矩形
 		CvBox2D rect2d = cvMinAreaRect2(pCurSeq);//小矩形（最小邻接）
@@ -435,9 +430,9 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 			cvRectangleR(outlineImg, rect1, CV_RGB(255, 0, 0), 1, 8, 0);
 #endif
 		}
-		TimeLogger::recordtimer(3);
 		pCurSeq = pCurSeq->h_next;
 	}
+	cvReleaseMemStorage(&storage);
 #ifdef CLONE_IMAGE
 #ifndef USE_DoG
 	cvReleaseImage(&pic);
@@ -448,7 +443,6 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	saveimage(outlineImg, "S10.jpg");
 	cvReleaseImage(&outlineImg);
 #endif
-	TimeLogger::starttimer(4);
 	//Step 10:找出Evaluation的最大值并输出
 	if (results.size() == 0)
 		return ret;
@@ -463,7 +457,6 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	ret.x *= 2;
 	ret.y *= 2;
 #endif
-	TimeLogger::recordtimer(4);
 	return ret;
 }
 

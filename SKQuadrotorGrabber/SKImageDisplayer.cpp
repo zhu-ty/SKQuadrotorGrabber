@@ -8,6 +8,8 @@
 #include "SKImageDisplayer.h"
 #include <mutex>
 #include <Windows.h>
+#include <stdio.h>
+#include <highgui.h>
 
 using namespace std;
 using namespace cv;

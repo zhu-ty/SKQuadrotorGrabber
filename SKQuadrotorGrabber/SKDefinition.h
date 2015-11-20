@@ -6,8 +6,13 @@
 //Use Ctrl+M,Ctrl+O to fold the code.
 
 
-#define PIC_MODE
 
+/*从摄像头读取数据并测试帧率，直接写在了主函数中*/
+#define CAMERA_DELAY_MODE
+
+#ifndef CAMERA_DELAY_MODE
+//#define PIC_MODE
+#endif
 #ifdef PIC_MODE
 /*核心衡量阈值*/
 #define CROSS_THR 0.7
@@ -36,13 +41,16 @@
 #define CROSS_THR_BALANCE 0.5
 /*轮廓筛选大小阈值*/
 #define CROSS_RECT_SIZE 100
-/*输出结果红色圆圈的大小*/
-#define CIRCLE_RADIUS 10
 
+#ifndef CAMERA_DELAY_MODE
 /*打印中间结果*/
 //#define SHOW_POINT
 /*复制待处理图片*/
 #define CLONE_IMAGE
+#endif
+
+/*输出结果红色圆圈的大小*/
+#define CIRCLE_RADIUS 10
 
 
 //TODOList:
