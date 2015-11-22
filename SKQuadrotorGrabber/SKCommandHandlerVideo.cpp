@@ -16,7 +16,6 @@
 #include <cstdio>
 #include <ctime>
 
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -67,7 +66,7 @@ public:
 	static void DoG(Mat& src, Mat_<Vec3b>& dest);
 	static void saveimage(const IplImage *p, const string s);
 
-	static CvPoint getquadrotor(IplImage *picc, CvPoint *LastPoint = NULL);
+	static CvPoint getquadrotor(IplImage *picc, CvPoint *LastPoint = nullptr,TimeLogger *tl = nullptr,IplImage *space = nullptr);
 
 	CvCapture *input;
 	SKImageDisplayer idis;
@@ -243,13 +242,15 @@ void SKCommandHandlerVideoImpl::load(string s)
 //}
 void SKCommandHandlerVideoImpl::exit()
 {
-	printf("See you next time!\n");
+	std::printf("See you next time!\n");
 }
 
 void SKCommandHandlerVideoImpl::calculate()
 {
 	if (input == nullptr)
 		return;
+	TimeLogger tl;
+	tl.s(0);
 #ifndef PIC_MODE
 	time_t timer = time(NULL);
 	int frame_count = (int)cvGetCaptureProperty(input, CV_CAP_PROP_FRAME_COUNT);
@@ -257,15 +258,18 @@ void SKCommandHandlerVideoImpl::calculate()
 	if (frame_count == 0)	return;
 	int frame_count_now = 0;
 	IplImage *frame = cvQueryFrame(input);
+	IplImage *myspace = cvCreateImage(cvSize(frame->width, frame->height), frame->depth, 1);
 	CvPoint ans = cvPoint(-1, -1);
 	int x = 0;
 	//idis.display(&frame);
 #ifdef OUTPUT_AVI
 	CvVideoWriter* wrVideo1 = cvCreateVideoWriter("TEST.avi", CV_FOURCC('M', 'J', 'P', 'G'), fps, cvGetSize(frame));
 #endif
+	tl.r(0);
 	while (1)
 	{
 		//获取每帧图像
+		tl.s(1);
 		frame = cvQueryFrame(input);
 		if (frame == NULL)
 			break;
@@ -277,33 +281,40 @@ void SKCommandHandlerVideoImpl::calculate()
 			continue;
 		}
 #endif
+		tl.r(1);
 		//若上一帧有输出则使用带帧间信息的判断方式
 		if (ans.x < 0 || ans.y < 0)
-			ans = getquadrotor(frame);
+			ans = getquadrotor(frame, nullptr, &tl, myspace);
 		else
-			ans = getquadrotor(frame, &ans);
+			ans = getquadrotor(frame, &ans, &tl,myspace);
 #ifdef OUTPUT_AVI
 		if (ans.x > 0 && ans.y > 0)
 			cvCircle(frame, ans, CIRCLE_RADIUS, CV_RGB(255, 0, 0),2);
 		cvWriteFrame(wrVideo1, frame);
 #endif
 		frame_count_now++;
+#ifdef SKIP
 		if (frame_count_now * 100 / frame_count != (frame_count_now - SKIP) * 100 / frame_count)
 			printf("%d%%\n", frame_count_now * 100 / frame_count);
-		//cvWaitKey((double)1000 / fps);
+#endif
 	}
 #ifdef OUTPUT_AVI
 	cvReleaseVideoWriter(&wrVideo1);
 #endif
-	//idis.hide();
+#ifdef SKIP
 	printf("%d seconds are used, total frames processed : ", (time(NULL) - timer));
 	printf("%d\n", frame_count / SKIP);
+#endif
+	for (int i = 0; i < tl.get_num(); i++)
+		printf("%lf\n", tl.get_n_elapsed(i));
 #endif
 	printf("\n");
 }
 
-CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoint)
+CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoint,TimeLogger *tl,IplImage *space)
 {
+	if (tl != nullptr)
+		tl->s(2);
 	CvPoint ret = cvPoint(-1, -1);
 	if (picc == nullptr || (picc->nChannels != 3 && picc->nChannels != 1))
 		return ret;
@@ -311,30 +322,42 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 #ifdef CLONE_IMAGE
 	IplImage *pic = cvCloneImage(picc);
 #else
-	IplImage *pic = picc;
+	IplImage *pica = picc;
+	IplImage *pic;
 #endif
 #ifndef USE_DoG
 	//Step 1:灰度化
-	if (pic->nChannels == 3)
+	if (pica->nChannels == 3)
 	{
-		IplImage *p = cvCreateImage(cvSize(pic->width, pic->height), pic->depth, 1);
-		cvCvtColor(pic, p, CV_BGR2GRAY);
+		IplImage *p;
+		if (space == nullptr)
+			p = cvCreateImage(cvSize(pica->width, pica->height), pica->depth, 1);
+		else
+			p = space;
+		cvCvtColor(pica, p, CV_BGR2GRAY);
+#ifdef CLONE_IMAGE
 		cvReleaseImage(&pic);
+#endif
 		pic = p;
 	}
+#ifndef CLONE_IMAGE
+	else
+		pic = pica;
+#endif
 	saveimage(pic, "S1.jpg");
 
 	//Step 2:自适应二值化
 	//TODO(_SHADOWK):应当改进二值化算法
 	cvAdaptiveThreshold(pic, pic, 255, 0, CV_THRESH_BINARY_INV, 25);
-	//Mat tmpm(pic);
+	Mat tmpm(pic);
 	//medianBlur(tmpm, tmpm, 5);
 	saveimage(pic, "S2.jpg");
 	//Step 3:腐蚀膨胀一次
-	//cvErode(pic, pic);
+	cvErode(pic, pic);
 	//cvDilate(pic, pic);
-	cvDilate(pic, pic);
+	//cvDilate(pic, pic);
 #else
+	pic = pica;
 	Mat tmpm(pic);
 	Mat_<Vec3b> tmpmre;
 	DoG(tmpm, tmpmre);
@@ -347,6 +370,10 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	saveimage(pic, "S2.jpg");
 	cvDilate(pic, pic);
 #endif
+	if (tl != nullptr)
+		tl->r(2);
+	if (tl != nullptr)
+		tl->s(3);
 	saveimage(pic, "S3.jpg");
 	//Step 4:找出图像所有轮廓
 	CvMemStorage* storage = cvCreateMemStorage(0);
@@ -360,9 +387,13 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 #ifdef DRAW_SEQ
 	IplImage* outlineImg = cvCreateImage(cvGetSize(pic), IPL_DEPTH_32F, 3);
 #endif
+	if (tl != nullptr)
+		tl->r(3);
 	//枚举每个轮廓
 	while (pCurSeq)
 	{
+		if (tl != nullptr)
+			tl->s(4);
 		//删除掉面积比较小的轮廓
 		double tmparea = fabs(cvContourArea(pCurSeq));
 		if (tmparea < CROSS_RECT_SIZE)
@@ -381,7 +412,10 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 		CvBox2D rect2d = cvMinAreaRect2(pCurSeq);//小矩形（最小邻接）
 		CvPoint2D32f rect4p[4];//最小邻接矩形的四个点
 		cvBoxPoints(rect2d, rect4p);
-
+		if (tl != nullptr)
+			tl->r(4);
+		if (tl != nullptr)
+			tl->s(5);
 		//Step 6: EvaluationA:小矩形的宽长比
 		double a = evaluation_squre(rect4p);
 
@@ -431,14 +465,16 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 #endif
 		}
 		pCurSeq = pCurSeq->h_next;
+		if (tl != nullptr)
+			tl->r(5);
 	}
 	cvReleaseMemStorage(&storage);
-#ifdef CLONE_IMAGE
 #ifndef USE_DoG
-	cvReleaseImage(&pic);
+	if(space == nullptr)
+		cvReleaseImage(&pic);
 #endif
-#endif
-
+	if (tl != nullptr)
+		tl->s(6);
 #ifdef DRAW_SEQ
 	saveimage(outlineImg, "S10.jpg");
 	cvReleaseImage(&outlineImg);
@@ -457,6 +493,8 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	ret.x *= 2;
 	ret.y *= 2;
 #endif
+	if (tl != nullptr)
+		tl->r(6);
 	return ret;
 }
 

@@ -65,6 +65,9 @@ int main()
 			tl.s(timer_num);
 		}
 		input_video >> input_frame;
+		IplImage p = IplImage(input_frame);
+		IplImage *pp = cvCloneImage(&p);
+		SKCommandHandlerVideo::GetDrone(pp);
 		//cv::imshow("Test", input_frame);
 		if (_kbhit() != 0)
 			break;
