@@ -31,11 +31,14 @@
 #define SKIP 1
 /*帧间距离阈值*/
 #define DIFF_THR 300
-/**/
+/*使用ROI，兴趣区域检测算法*/
+#define USE_ROI
 #endif
 
+#ifndef USE_ROI
 /*使用DoG算法代替自适应二值化算法*/
 #define USE_DoG
+#endif
 /*两类权衡算法占比*/
 #define CROSS_THR_BALANCE 0.5
 /*轮廓筛选大小阈值*/

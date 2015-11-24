@@ -68,6 +68,10 @@ public:
 
 	static CvPoint getquadrotor(IplImage *picc, CvPoint *LastPoint = nullptr,TimeLogger *tl = nullptr,IplImage *space = nullptr);
 
+	static const int ROIsize = 500;
+	/*获得ROI左上角的点*/
+	static CvPoint getROI(CvSize sz, CvPoint LastPoint);
+
 	CvCapture *input;
 	SKImageDisplayer idis;
 
@@ -327,14 +331,26 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 #endif
 #ifndef USE_DoG
 	//Step 1:灰度化
+#ifndef CLONE_IMAGE
 	if (pica->nChannels == 3)
 	{
 		IplImage *p;
 		if (space == nullptr)
 			p = cvCreateImage(cvSize(pica->width, pica->height), pica->depth, 1);
+#else
+	if (pic->nChannels == 3)
+	{
+		IplImage *p;
+		if (space == nullptr)
+			p = cvCreateImage(cvSize(pic->width, pic->height), pic->depth, 1);
+#endif
 		else
 			p = space;
+#ifndef CLONE_IMAGE
 		cvCvtColor(pica, p, CV_BGR2GRAY);
+#else
+		cvCvtColor(pic, p, CV_BGR2GRAY);
+#endif
 #ifdef CLONE_IMAGE
 		cvReleaseImage(&pic);
 #endif
@@ -344,18 +360,41 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	else
 		pic = pica;
 #endif
+#ifdef USE_ROI
+	CvPoint Roi;
+	if (LastPoint != nullptr)
+	{
+		Roi = getROI(cvSize(pic->width, pic->height), *LastPoint);
+		if (Roi.x > -1 && Roi.y > -1)
+		{
+			IplImage *q = pic;
+			//Mat tmpmat(pic);
+			//Mat tmpmatroi(tmpmat, Rect(Roi.x, Roi.y, ROIsize, ROIsize));
+			//IplImage tmpipl = ((IplImage)tmpmatroi);
+			//pic = cvCloneImage(&tmpipl);
+			cvSetImageROI(pic, cvRect(Roi.x, Roi.y, ROIsize, ROIsize));
+			IplImage *pp = cvCreateImage(cvSize(ROIsize, ROIsize), pic->depth, pic->nChannels);
+			cvCopy(pic, pp);
+			pic = pp;
+			if (space == nullptr)
+				cvReleaseImage(&q);
+			else
+				cvResetImageROI(q);
+		}
+	}
+#endif
 	saveimage(pic, "S1.jpg");
 
 	//Step 2:自适应二值化
 	//TODO(_SHADOWK):应当改进二值化算法
 	cvAdaptiveThreshold(pic, pic, 255, 0, CV_THRESH_BINARY_INV, 25);
-	Mat tmpm(pic);
+	//Mat tmpm(pic);
 	//medianBlur(tmpm, tmpm, 5);
 	saveimage(pic, "S2.jpg");
 	//Step 3:腐蚀膨胀一次
-	cvErode(pic, pic);
+	//cvErode(pic, pic);
 	//cvDilate(pic, pic);
-	//cvDilate(pic, pic);
+	cvDilate(pic, pic);
 #else
 	pic = pica;
 	Mat tmpm(pic);
@@ -437,7 +476,13 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 			double yt = (LastPoint->y) / 2.0;
 			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, xt, yt);
 #else
+#ifdef USE_ROI
+			double xt = (LastPoint->x) - Roi.x;
+			double yt = (LastPoint->y) - Roi.y;
+			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, xt, yt);
+#else
 			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, LastPoint->x, LastPoint->y);
+#endif
 #endif
 			double weight = 1;
 			if (distance_dif > 2 * DIFF_THR)
@@ -470,8 +515,15 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	}
 	cvReleaseMemStorage(&storage);
 #ifndef USE_DoG
+#ifndef USE_ROI
 	if(space == nullptr)
 		cvReleaseImage(&pic);
+#else
+#ifdef CLONE_IMAGE
+	if (LastPoint != nullptr)
+		cvReleaseImage(&pic);
+#endif
+#endif
 #endif
 	if (tl != nullptr)
 		tl->s(6);
@@ -493,8 +545,36 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	ret.x *= 2;
 	ret.y *= 2;
 #endif
+#ifdef USE_ROI
+	if (LastPoint != nullptr)
+	{
+		ret.x += Roi.x;
+		ret.y += Roi.y;
+	}
+#endif
 	if (tl != nullptr)
 		tl->r(6);
+	return ret;
+}
+
+CvPoint SKCommandHandlerVideoImpl::getROI(CvSize fullsz, CvPoint LastPoint)
+{
+	CvPoint ret = cvPoint(0,0);
+	if (fullsz.height < ROIsize || fullsz.width < ROIsize)
+		return cvPoint(-1, -1);
+	if (LastPoint.x - ROIsize / 2 < 0)
+		ret.x = 0;
+	else if (LastPoint.x + ROIsize / 2 > fullsz.width)
+		ret.x = fullsz.width - ROIsize;
+	else
+		ret.x = LastPoint.x - ROIsize / 2;
+
+	if (LastPoint.y - ROIsize / 2 < 0)
+		ret.y = 0;
+	else if (LastPoint.y + ROIsize / 2 > fullsz.height)
+		ret.y = fullsz.height - ROIsize;
+	else
+		ret.y = LastPoint.y - ROIsize / 2;
 	return ret;
 }
 
