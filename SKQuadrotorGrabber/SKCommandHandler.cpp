@@ -234,7 +234,11 @@ void SKCommandHandlerImpl::calculate()
 	CvPoint ans;
 	ans = SKCommandHandlerVideo::GetDrone(input);
 	if (ans.x > 0 && ans.y > 0)
+#ifdef CIRCLE_RADIUS
 		cvCircle(input, ans, CIRCLE_RADIUS, CV_RGB(255, 0, 0), 2);
+#else
+		cvCircle(input, ans, 10, CV_RGB(255, 0, 0), 2);
+#endif
 	#pragma region OLD
 	//if (input->nChannels == 3)
 	//{

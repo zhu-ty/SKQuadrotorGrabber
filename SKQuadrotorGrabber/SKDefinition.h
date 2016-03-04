@@ -5,13 +5,10 @@
 //2015.10.31
 //Use Ctrl+M,Ctrl+O to fold the code.
 
-
-
 /*从摄像头读取数据并测试帧率，直接写在了主函数中*/
 //#define CAMERA_DELAY_MODE
-
 #ifndef CAMERA_DELAY_MODE
-//#define PIC_MODE
+#define PIC_MODE
 #endif
 #ifdef PIC_MODE
 /*核心衡量阈值*/
@@ -61,5 +58,4 @@
 // 部分错误帧的处理（帧编号的输出）
 // 有效结果的帧内输出
 // 填补DoG算法中心空白
-// 只处理感兴趣区域
 // _SHADOWK

@@ -425,6 +425,9 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	vector<SKResult> results;
 #ifdef DRAW_SEQ
 	IplImage* outlineImg = cvCreateImage(cvGetSize(pic), IPL_DEPTH_32F, 3);
+
+	
+
 #endif
 	if (tl != nullptr)
 		tl->r(3);
