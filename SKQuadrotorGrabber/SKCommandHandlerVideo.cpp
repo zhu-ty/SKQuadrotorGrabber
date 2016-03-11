@@ -506,7 +506,7 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 #endif
 		if (vec_data != nullptr)
 		{
-			Evaluation_Data e_d(a, b, (LastPoint == NULL) ? (-1) : (distance_dif), t);
+			Evaluation_Data e_d(a, b, (LastPoint == NULL) ? (-1) : (distance_dif), t, static_cast<int>(rect2d.center.x), static_cast<int>(rect2d.center.y));
 			vec_data->push_back(e_d);
 		}
 		//Step 9:超过阈值则置入Vector中

@@ -130,6 +130,45 @@ int main()
 
 				if (i / skip < f1)
 				{
+					int max_ii_a = 0;
+					for (int ii = 0; ii < v_e_d.size(); ii++)
+					{
+						if (v_e_d[ii].evaluation_a > v_e_d[max_ii_a].evaluation_a)
+							max_ii_a = ii;
+					}
+					//for (int ii = 0; ii < v_e_d.size(); ii++)
+					//{
+					//	fprintf(out, "%5lf %d 0\n", v_e_d[ii].evaluation_a, (ii == max_ii_a) ? (1) : (0));
+					//}
+					fprintf(out, "%5lf 1 0\n", v_e_d[max_ii_a].evaluation_a);
+				}
+				else
+				{
+					int max_ii_t = 0;
+					int max_ii_a = 0;
+					for (int ii = 0; ii < v_e_d.size(); ii++)
+					{
+						if (v_e_d[ii].t_value > v_e_d[max_ii_t].t_value)
+							max_ii_t = ii;
+						if (v_e_d[ii].evaluation_a > v_e_d[max_ii_a].evaluation_a)
+							max_ii_a = ii;
+					}
+					//for (int ii = 0; ii < v_e_d.size(); ii++)
+					//{
+					//	fprintf(out, "%5lf %d %d\n", v_e_d[ii].evaluation_a, (ii == max_ii_a) ? (1) : (0), (ii == max_ii_t) ? (1) : (0));
+					//}
+					if(max_ii_a == max_ii_t)
+						fprintf(out, "%5lf 1 1\n", v_e_d[max_ii_a].evaluation_a);
+					else
+					{
+						fprintf(out, "%5lf 1 0\n%5lf 0 1\n", v_e_d[max_ii_a].evaluation_a, v_e_d[max_ii_t].evaluation_a);
+					}
+				}
+				fprintf(out, "\n\n");
+
+				/*
+				if (i / skip < f1)
+				{
 					for (int ii = 0; ii < v_e_d.size(); ii++)
 					{
 						fprintf(out, "%5lf  %5lf  %7lf  %5lf 0\n", v_e_d[ii].evaluation_a, v_e_d[ii].evaluation_b, v_e_d[ii].distance, v_e_d[ii].t_value);
@@ -149,13 +188,14 @@ int main()
 					}
 				}
 				fprintf(out, "\n\n");
+				*/
 
 				//if (cp.x > 0)
 				//cvCircle(copy_frame, cp, 20, CV_RGB(255, 0, 0), 4);
 				//char name[50] = { 0 };
 				//sprintf(name, "a//%.1lf//%d.jpg", CROSS_THR, i / skip);
 				//cvSaveImage(name, copy_frame);
-			}
+				}
 		}
 		//printf("%lf%%  %lf%%  %lf\n", ((double)false_ans) / f1 * 100, ((double)true_ans) / f2 * 100, CROSS_THR);
 	}

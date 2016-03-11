@@ -62,12 +62,15 @@
 
 struct Evaluation_Data
 {
-	Evaluation_Data(double _evaluation_a, double _evaluation_b, double _distance, double _t_value)
+	Evaluation_Data(double _evaluation_a, double _evaluation_b, double _distance, double _t_value,int _x,int _y)
 	{
 		evaluation_a = _evaluation_a;
 		evaluation_b = _evaluation_b;
 		distance = _distance;
 		t_value = _t_value;
+		point_x = _x;
+		point_y = _y;
 	}
 	double evaluation_a, evaluation_b, distance, t_value;
+	int point_x, point_y;
 };
