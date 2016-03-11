@@ -39,7 +39,7 @@ int main()
 		last_result = drone_catcher.GetDrone(last_result.point, img);
 		ans.push_back(last_result.point);
 		if (current % 100 == 0)
-			printf("%d\%\n", (current * 100 / total));
+			printf("%d%%\n", (current * 100 / total));
 		if (current >= total)
 			break;
 		current++;

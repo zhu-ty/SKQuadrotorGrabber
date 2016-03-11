@@ -11,6 +11,7 @@
 #include "SKDefinition.h"
 #include <iostream>
 #include <cv.h>
+#include "TimeLogger.h"
 using namespace std;
 
 class SKCommandHandlerVideo
@@ -22,6 +23,9 @@ public:
 	SKCommandHandlerVideo();
 	~SKCommandHandlerVideo();
 	static CvPoint GetDrone(IplImage *pic);
+#ifndef ROC_DEBUG_MODE
 private:
+#endif
 	class SKCommandHandlerVideoImpl *_impl;
+	static CvPoint getquadrotor(IplImage *picc, CvPoint *LastPoint = nullptr, TimeLogger *tl = nullptr, IplImage *space = nullptr, vector<Evaluation_Data> *vec_data = nullptr);
 };

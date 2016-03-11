@@ -5,6 +5,12 @@
 
 #pragma once
 
+#include "SKDefinition.h"
+
+#ifdef ROC_DEBUG_MODE
+extern double CROSS_THR;
+#endif
+
 #include "SKCommandHandlerVideo.h"
 #include "SKImageDisplayer.h"
 #include "TimeLogger.h"
@@ -66,7 +72,7 @@ public:
 	static void DoG(Mat& src, Mat_<Vec3b>& dest);
 	static void saveimage(const IplImage *p, const string s);
 
-	static CvPoint getquadrotor(IplImage *picc, CvPoint *LastPoint = nullptr,TimeLogger *tl = nullptr,IplImage *space = nullptr);
+	static CvPoint getquadrotor(IplImage *picc, CvPoint *LastPoint = nullptr, TimeLogger *tl = nullptr, IplImage *space = nullptr, vector<Evaluation_Data> *vec_data = nullptr);
 
 	static const int ROIsize = 500;
 	/*获得ROI左上角的点*/
@@ -96,7 +102,10 @@ CvPoint SKCommandHandlerVideo::GetDrone(IplImage *pic)
 {
 	return SKCommandHandlerVideoImpl::getquadrotor(pic);
 }
-
+CvPoint SKCommandHandlerVideo::getquadrotor(IplImage *picc, CvPoint *LastPoint, TimeLogger *tl, IplImage *space,vector<Evaluation_Data> *vec_data)
+{
+	return SKCommandHandlerVideoImpl::getquadrotor(picc, LastPoint, tl, space, vec_data);
+}
 void SKCommandHandlerVideo::begin()
 {
 	printf("Input command.Input \"help\" for command help.\n$");
@@ -315,7 +324,7 @@ void SKCommandHandlerVideoImpl::calculate()
 	printf("\n");
 }
 
-CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoint,TimeLogger *tl,IplImage *space)
+CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoint, TimeLogger *tl, IplImage *space, vector<Evaluation_Data> *vec_data)
 {
 	if (tl != nullptr)
 		tl->s(2);
@@ -425,9 +434,6 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 	vector<SKResult> results;
 #ifdef DRAW_SEQ
 	IplImage* outlineImg = cvCreateImage(cvGetSize(pic), IPL_DEPTH_32F, 3);
-
-	
-
 #endif
 	if (tl != nullptr)
 		tl->r(3);
@@ -472,6 +478,7 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 
 		//Step 8: 利用帧间信息（超过两倍DIFF_THR则为零，否则从0增益到1.5）
 #ifndef PIC_MODE
+		double distance_dif;
 		if (LastPoint != NULL)
 		{
 #ifdef USE_DoG
@@ -482,9 +489,9 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 #ifdef USE_ROI
 			double xt = (LastPoint->x) - Roi.x;
 			double yt = (LastPoint->y) - Roi.y;
-			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, xt, yt);
+			distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, xt, yt);
 #else
-			double distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, LastPoint->x, LastPoint->y);
+			distance_dif = dot_to_dot(rect2d.center.x, rect2d.center.y, LastPoint->x, LastPoint->y);
 #endif
 #endif
 			double weight = 1;
@@ -497,6 +504,11 @@ CvPoint SKCommandHandlerVideoImpl::getquadrotor(IplImage *picc, CvPoint *LastPoi
 			t = t * weight;
 		}
 #endif
+		if (vec_data != nullptr)
+		{
+			Evaluation_Data e_d(a, b, (LastPoint == NULL) ? (-1) : (distance_dif), t);
+			vec_data->push_back(e_d);
+		}
 		//Step 9:超过阈值则置入Vector中
 		if (t > CROSS_THR)
 		{
