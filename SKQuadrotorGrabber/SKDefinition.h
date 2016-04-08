@@ -9,7 +9,7 @@
 //#define CAMERA_DELAY_MODE
 
 /*绘画ROC曲线时需要的情况，直接从主函数读取*/
-#define ROC_DEBUG_MODE
+//#define ROC_DEBUG_MODE
 
 #ifndef CAMERA_DELAY_MODE
 //#define PIC_MODE
@@ -27,9 +27,9 @@
 #endif
 #else
 /*核心衡量阈值*/
-//#define CROSS_THR 0.63
+#define CROSS_THR 0.63
 /*跳帧 每N帧中处理1帧*/
-#define SKIP 1
+#define SKIP 10
 /*帧间距离阈值*/
 #define DIFF_THR 300
 /*使用ROI，兴趣区域检测算法*/

@@ -102,7 +102,7 @@ int main()
 	cp.y = -1;
 	int skip = 15;
 	CROSS_THR = 0.63;
-	FILE *out = fopen("info.txt", "w");
+	FILE *out = fopen("info_R1.txt", "w");
 	for (int j = 0; j < 1; j++)
 	{
 		cvReleaseCapture(&capture);
@@ -130,6 +130,66 @@ int main()
 
 				if (i / skip < f1)
 				{
+					int max_ii_r = 0;
+					for (int ii = 0; ii < v_e_d.size(); ii++)
+					{
+						if (CROSS_THR_BALANCE * v_e_d[ii].evaluation_a + (1 - CROSS_THR_BALANCE) * v_e_d[ii].evaluation_b >
+							CROSS_THR_BALANCE * v_e_d[max_ii_r].evaluation_a + (1 - CROSS_THR_BALANCE) * v_e_d[max_ii_r].evaluation_b)
+							max_ii_r = ii;
+					}
+					//for (int ii = 0; ii < v_e_d.size(); ii++)
+					//{
+					//	fprintf(out, "%5lf %d 0\n", v_e_d[ii].evaluation_a, (ii == max_ii_a) ? (1) : (0));
+					//}
+					fprintf(out, "%5lf 1 0\n", CROSS_THR_BALANCE * v_e_d[max_ii_r].evaluation_a + (1 - CROSS_THR_BALANCE) * v_e_d[max_ii_r].evaluation_b);
+				}
+				else
+				{
+					int max_ii_t = 0;
+					for (int ii = 0; ii < v_e_d.size(); ii++)
+					{
+						if (v_e_d[ii].t_value > v_e_d[max_ii_t].t_value)
+							max_ii_t = ii;
+					}
+					fprintf(out, "%5lf 1 1\n", CROSS_THR_BALANCE * v_e_d[max_ii_t].evaluation_a + (1 - CROSS_THR_BALANCE) * v_e_d[max_ii_t].evaluation_b);
+				}
+				fprintf(out, "\n\n");
+
+
+
+				/*
+				if (i / skip < f1)
+				{
+					int max_ii_b = 0;
+					for (int ii = 0; ii < v_e_d.size(); ii++)
+					{
+						if (v_e_d[ii].evaluation_b > v_e_d[max_ii_b].evaluation_b)
+							max_ii_b = ii;
+					}
+					//for (int ii = 0; ii < v_e_d.size(); ii++)
+					//{
+					//	fprintf(out, "%5lf %d 0\n", v_e_d[ii].evaluation_a, (ii == max_ii_a) ? (1) : (0));
+					//}
+					fprintf(out, "%5lf 1 0\n", v_e_d[max_ii_b].evaluation_b);
+				}
+				else
+				{
+					int max_ii_t = 0;
+					int max_ii_b = 0;
+					for (int ii = 0; ii < v_e_d.size(); ii++)
+					{
+						if (v_e_d[ii].t_value > v_e_d[max_ii_t].t_value)
+							max_ii_t = ii;
+						if (v_e_d[ii].evaluation_b > v_e_d[max_ii_b].evaluation_b)
+							max_ii_b = ii;
+					}
+					fprintf(out, "%5lf 1 1\n", v_e_d[max_ii_t].evaluation_b);
+				}
+				fprintf(out, "\n\n");
+				*/
+				/*
+				if (i / skip < f1)
+				{
 					int max_ii_a = 0;
 					for (int ii = 0; ii < v_e_d.size(); ii++)
 					{
@@ -153,19 +213,10 @@ int main()
 						if (v_e_d[ii].evaluation_a > v_e_d[max_ii_a].evaluation_a)
 							max_ii_a = ii;
 					}
-					//for (int ii = 0; ii < v_e_d.size(); ii++)
-					//{
-					//	fprintf(out, "%5lf %d %d\n", v_e_d[ii].evaluation_a, (ii == max_ii_a) ? (1) : (0), (ii == max_ii_t) ? (1) : (0));
-					//}
-					if(max_ii_a == max_ii_t)
-						fprintf(out, "%5lf 1 1\n", v_e_d[max_ii_a].evaluation_a);
-					else
-					{
-						fprintf(out, "%5lf 1 0\n%5lf 0 1\n", v_e_d[max_ii_a].evaluation_a, v_e_d[max_ii_t].evaluation_a);
-					}
+						fprintf(out, "%5lf 1 1\n", v_e_d[max_ii_t].evaluation_a);
 				}
 				fprintf(out, "\n\n");
-
+				*/
 				/*
 				if (i / skip < f1)
 				{
