@@ -27,9 +27,9 @@
 #endif
 #else
 /*核心衡量阈值*/
-#define CROSS_THR 0.63
+#define CROSS_THR 0.25//0.63
 /*跳帧 每N帧中处理1帧*/
-#define SKIP 10
+#define SKIP 1
 /*帧间距离阈值*/
 #define DIFF_THR 300
 /*使用ROI，兴趣区域检测算法*/

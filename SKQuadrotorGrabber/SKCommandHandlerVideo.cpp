@@ -277,6 +277,7 @@ void SKCommandHandlerVideoImpl::calculate()
 	//idis.display(&frame);
 #ifdef OUTPUT_AVI
 	CvVideoWriter* wrVideo1 = cvCreateVideoWriter("TEST.avi", CV_FOURCC('M', 'J', 'P', 'G'), fps, cvGetSize(frame));
+	FILE *out_txt = fopen("output_pixel.txt", "w");
 #endif
 	tl.r(0);
 	while (1)
@@ -299,10 +300,11 @@ void SKCommandHandlerVideoImpl::calculate()
 		if (ans.x < 0 || ans.y < 0)
 			ans = getquadrotor(frame, nullptr, &tl, myspace);
 		else
-			ans = getquadrotor(frame, &ans, &tl,myspace);
+			ans = getquadrotor(frame, &ans, &tl, myspace);
 #ifdef OUTPUT_AVI
 		if (ans.x > 0 && ans.y > 0)
-			cvCircle(frame, ans, CIRCLE_RADIUS, CV_RGB(255, 0, 0),2);
+			cvCircle(frame, ans, CIRCLE_RADIUS, CV_RGB(255, 0, 0), 2);
+		fprintf(out_txt, "%d %d\n", ans.x, ans.y);
 		cvWriteFrame(wrVideo1, frame);
 #endif
 		frame_count_now++;
@@ -313,6 +315,7 @@ void SKCommandHandlerVideoImpl::calculate()
 	}
 #ifdef OUTPUT_AVI
 	cvReleaseVideoWriter(&wrVideo1);
+	fclose(out_txt);
 #endif
 #ifdef SKIP
 	printf("%d seconds are used, total frames processed : ", (time(NULL) - timer));

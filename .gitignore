@@ -8,6 +8,7 @@
 *.bmp
 *.png
 *.m4v
+*.mov
 
 # User-specific files
 *.suo
