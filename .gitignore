@@ -9,6 +9,7 @@
 *.png
 *.m4v
 *.mov
+*.opendb
 
 # User-specific files
 *.suo
