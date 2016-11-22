@@ -9,22 +9,32 @@
 #include <vector>
 using namespace std;
 
-int main()
+int main(int argc, char** argv)
 {
 	using cv::Mat;
 
 	DroneCatcher drone_catcher;
 	string str;
-	getline(cin, str);
+	if (argc < 2)
+		getline(cin, str);
+	else
+		str = argv[1];
+	//str = "F:/zÖ£×Ü/2016-11-20/ÓãÑÛÍ¼Ïñ/ÓãÑÛÍ¼Ïñ/1.jpg";
 	Mat img;
 #ifdef IMG_MODE
 	img = cv::imread(str.c_str());
-	DroneCatcher::SKResult sk_result = drone_catcher.GetDrone(cv::Point(-1, -1), img);
+	DroneCatcher::SKResult sk_result;
+	if(argc > 2)
+		sk_result = drone_catcher.GetDrone(cv::Point(-1, -1), img, atoi(argv[2]));
+	else
+		sk_result = drone_catcher.GetDrone(cv::Point(-1, -1), img);
 	printf("%d %d\n", sk_result.point.x, sk_result.point.y);
 	img = cv::imread(str.c_str());
 	cv::circle(img, sk_result.point, 30, cv::Scalar(0, 0, 0));
-	cv::imwrite("F:\\zÖ£×Ü\\Pic2015Äê10ÔÂ31ÈÕ\\33.jpg", img);
-	system("pause");
+	str = "out" + str;
+	cv::imwrite(str, img);
+	if(argc < 2)
+		system("pause");
 #endif
 #ifdef VID_MODE
 	cv::VideoCapture video_capture(str);

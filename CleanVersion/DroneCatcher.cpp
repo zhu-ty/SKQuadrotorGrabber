@@ -6,7 +6,7 @@ using cv::Rect;
 using cv::RotatedRect;
 using cv::Point;
 #pragma warning(disable:4018)
-DroneCatcher::SKResult DroneCatcher::GetDrone(Point last_point, cv::Mat image)
+DroneCatcher::SKResult DroneCatcher::GetDrone(Point last_point, cv::Mat image, int thr)
 {
 	bool has_last_point = true;
 	Point roi_start = Point(-1, -1);
@@ -23,10 +23,14 @@ DroneCatcher::SKResult DroneCatcher::GetDrone(Point last_point, cv::Mat image)
 		Rect roi_rect(roi_start.x, roi_start.y, ROI_WIDTH, ROI_HEIGHT);
 		part = image(roi_rect);
 	}
-
+	image.copyTo(output);
 	cv::cvtColor(part, gray, CV_BGR2GRAY);
-	cv::adaptiveThreshold(gray, gray, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 3, 5.0);
+	saveimage(gray, "gray.jpg");
+	//cv::adaptiveThreshold(gray, gray, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 31, 5.0);
+	cv::threshold(gray, gray, thr, 255, CV_THRESH_BINARY_INV);
+	saveimage(gray, "gray_th.jpg");
 	cv::dilate(gray, gray, NULL);
+	saveimage(gray, "gray_th_dil.jpg");
 	gray.copyTo(binary);
 	
 	vector<vector<Point>> contours;
@@ -66,9 +70,17 @@ DroneCatcher::SKResult DroneCatcher::GetDrone(Point last_point, cv::Mat image)
 			new_skresult.point.y = (int)round(rect_B.center.y + roi_start.y);
 			new_skresult.trust = t_value;
 			result_list.push_back(new_skresult);
+#ifdef SAVE_IMG
+			for (int z = 0; z < 4; z++)
+				for (int j = z + 1; j < 4; j++)
+					cv::line(output, rect_B_p[z], rect_B_p[j], cv::Scalar(0, 0, 255));
+			cv::drawContours(output, contours, i, cv::Scalar(0, 255, 0));
+			cv::rectangle(output, rect_A, cv::Scalar(255, 0, 0));
+#endif
 		}
 		
 	}
+	saveimage(output, "final.jpg");
 	SKResult ret;
 	if (result_list.size() == 0)
 		return ret;
@@ -145,4 +157,12 @@ double DroneCatcher::dot_to_line(double p0x, double p0y, double pax, double pay,
 double DroneCatcher::dot_to_dot(double pax, double pay, double pbx, double pby)
 {
 	return sqrt(sqr(pax - pbx) + sqr(pay - pby));
+}
+
+void DroneCatcher::saveimage(const cv::Mat p, const std::string s)
+{
+#ifdef SAVE_IMG
+	cv::imwrite(s, p);
+#endif
+	return;
 }

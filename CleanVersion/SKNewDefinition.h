@@ -12,8 +12,11 @@
 #define ROI_WIDTH 500
 #define ROI_HEIGHT 500
 
+/*是否保存中间步骤*/
+#define SAVE_IMG
+
 /*主程序宏定义，为单张图片模式*/
-//#define IMG_MODE
+#define IMG_MODE
 #ifndef IMG_MODE
 /*主程序宏定义，为视频处理模式*/
 #define VID_MODE

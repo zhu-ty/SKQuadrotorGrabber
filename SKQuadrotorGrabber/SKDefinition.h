@@ -12,7 +12,7 @@
 //#define ROC_DEBUG_MODE
 
 #ifndef CAMERA_DELAY_MODE
-//#define PIC_MODE
+#define PIC_MODE
 #endif
 #ifdef PIC_MODE
 /*ºËÐÄºâÁ¿ãÐÖµ*/
